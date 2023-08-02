@@ -404,10 +404,19 @@ impl State {
         {
             match virtual_keycode {
                 Some(winit::event::VirtualKeyCode::Space) => {
-                    let diffuse_bytes = include_bytes!("space city2.jpg");
-                    let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
-                    let diffuse_rgba = diffuse_image.to_rgba8();
-                    let dimensions = diffuse_image.dimensions();
+                    let dimensions = (1920, 1080);
+                    let mut diffuse_rgba = image::ImageBuffer::from_pixel(
+                        dimensions.0,
+                        dimensions.1,
+                        image::Rgba([0; 4]),
+                    );
+
+                    for (index, pixel) in diffuse_rgba.pixels_mut().enumerate() {
+                        let x = (index % (1920 * 4)) as u8;
+                        let y = (index / (1920 * 4)) as u8;
+                        *pixel = image::Rgba([y % 128, x % 64 + 32, x % 32, 0]);
+                    }
+
                     self.queue.write_texture(
                         // copy destination
                         wgpu::ImageCopyTextureBase {
@@ -432,7 +441,6 @@ impl State {
                             depth_or_array_layers: 1,
                         },
                     );
-                    println!("Yo.");
                 }
                 Some(_) => {}
                 None => {}
