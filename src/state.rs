@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 
@@ -12,44 +10,49 @@ pub struct State {
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
 
-    pause: bool,
+    //pause: bool,
 
     // buffers
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
-
-    // info
-    last_time: Instant,
-    progress_speed: f32,
-    info: ShaderInfo,
-    info_buffer: wgpu::Buffer,
-    info_bind_group: wgpu::BindGroup,
+    // // info
+    // last_time: Instant,
+    // progress_speed: f32,
+    // info: ShaderInfo,
+    // info_buffer: wgpu::Buffer,
+    // info_bind_group: wgpu::BindGroup,
 }
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct ShaderInfo {
-    time: f32,
-    w: u32,
-    h: u32,
-}
+// #[repr(C)]
+// #[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+// struct ShaderInfo {
+//     time: f32,
+//     w: u32,
+//     h: u32,
+// }
 
-/// Tree: instance  -> surface  -> device
-///                             -> queue
-///                 -> surface
+// Tree: instance  -> surface  -> device
+//                             -> queue
+//                 -> surface
+
+/// Vertices forming the corners of a rectangle
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-1.0, -1.0, 0.0],
+        position: [-0.5, -0.5, 0.0],
     },
     Vertex {
-        position: [3.0, -1.0, 0.0],
+        position: [0.5, -0.5, 0.0],
     },
     Vertex {
-        position: [-1.0, 3.0, 0.0],
+        position: [-0.5, 0.5, 0.0],
+    },
+    Vertex {
+        position: [0.5, 0.5, 0.0],
     },
 ];
 
-const INDICES: &[u16] = &[0, 1, 2];
+// indices to draw this rectangle of two triangles.
+const INDICES: &[u16] = &[0, 1, 2, 1, 3, 2];
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -69,14 +72,6 @@ impl Vertex {
             step_mode: wgpu::VertexStepMode::Vertex,
             // what are the contents of this buffer?
             attributes: &Self::ATTRIBS,
-            // &[wgpu::VertexAttribute {
-            //     // starting point
-            //     offset: 0,
-            //     // where to store this? corresponds to attributes of struct
-            //     shader_location: 0,
-            //     // basically just the data type
-            //     format: wgpu::VertexFormat::Float32x3,
-            // }],
         }
     }
 }
@@ -144,41 +139,41 @@ impl State {
         // create & compile the shaders
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
 
-        let info = ShaderInfo {
-            time: 286.0, //96.0,
-            w: size.width,
-            h: size.height,
-        };
+        // let info = ShaderInfo {
+        //     time: 286.0, //96.0,
+        //     w: size.width,
+        //     h: size.height,
+        // };
 
-        let info_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Info Buffer"),
-            contents: bytemuck::cast_slice(&[info]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
+        // let info_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Info Buffer"),
+        //     contents: bytemuck::cast_slice(&[info]),
+        //     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        // });
 
-        let info_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Info Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
+        // let info_bind_group_layout =
+        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        //         label: Some("Info Bind Group Layout"),
+        //         entries: &[wgpu::BindGroupLayoutEntry {
+        //             binding: 0,
+        //             visibility: wgpu::ShaderStages::VERTEX,
+        //             ty: wgpu::BindingType::Buffer {
+        //                 ty: wgpu::BufferBindingType::Uniform,
+        //                 has_dynamic_offset: false,
+        //                 min_binding_size: None,
+        //             },
+        //             count: None,
+        //         }],
+        //     });
 
-        let info_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Info Bind Group"),
-            layout: &info_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: info_buffer.as_entire_binding(),
-            }],
-        });
+        // let info_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     label: Some("Info Bind Group"),
+        //     layout: &info_bind_group_layout,
+        //     entries: &[wgpu::BindGroupEntry {
+        //         binding: 0,
+        //         resource: info_buffer.as_entire_binding(),
+        //     }],
+        // });
 
         // create the pipeline
 
@@ -187,7 +182,7 @@ impl State {
             layout: Some(
                 &device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[&info_bind_group_layout],
+                    bind_group_layouts: &[], //&[&info_bind_group_layout],
                     push_constant_ranges: &[],
                 }),
             ),
@@ -249,15 +244,15 @@ impl State {
             config,
             size,
             window,
-            pause: false,
+            //pause: false,
             render_pipeline,
             vertex_buffer,
             index_buffer,
-            last_time: Instant::now(),
-            progress_speed: 1.0,
-            info,
-            info_buffer,
-            info_bind_group,
+            // last_time: Instant::now(),
+            // progress_speed: 1.0,
+            // info,
+            // info_buffer,
+            // info_bind_group,
         }
     }
 
@@ -278,61 +273,30 @@ impl State {
         if let winit::event::WindowEvent::KeyboardInput {
             input:
                 winit::event::KeyboardInput {
-                    virtual_keycode,
+                    virtual_keycode: _,
                     state: winit::event::ElementState::Pressed,
                     ..
                 },
             ..
         } = event
-        {
-            match virtual_keycode {
-                Some(winit::event::VirtualKeyCode::Left) => {
-                    self.info.time -= 1.0 * self.progress_speed;
-                }
-                Some(winit::event::VirtualKeyCode::Right) => {
-                    self.info.time += 1.0 * self.progress_speed;
-                }
-                Some(winit::event::VirtualKeyCode::Down) => {
-                    self.info.time -= 0.1 * self.progress_speed;
-                }
-                Some(winit::event::VirtualKeyCode::Up) => {
-                    self.info.time += 0.1 * self.progress_speed;
-                }
-                Some(winit::event::VirtualKeyCode::Equals)
-                | Some(winit::event::VirtualKeyCode::Plus) => {
-                    self.progress_speed *= 1.5;
-                }
-                Some(winit::event::VirtualKeyCode::Minus) => {
-                    self.progress_speed *= 2.0 / 3.0;
-                }
-                Some(winit::event::VirtualKeyCode::P) => {
-                    self.progress_speed = 1.0;
-                }
-                Some(winit::event::VirtualKeyCode::Space) => {
-                    self.pause = !self.pause;
-                    println!("{}", self.info.time);
-                }
-                Some(_) => {}
-                None => {}
-            }
-        }
+        {}
 
         false
     }
 
     pub(crate) fn update(&mut self) {
-        self.info.w = self.size.width;
-        self.info.h = self.size.height;
-        let now = std::time::Instant::now();
-        if !self.pause {
-            self.info.time += (now.checked_duration_since(self.last_time))
-                .unwrap_or_default()
-                .as_secs_f32()
-                * self.progress_speed;
-        }
-        self.last_time = now;
-        self.queue
-            .write_buffer(&self.info_buffer, 0, bytemuck::cast_slice(&[self.info]));
+        // self.info.w = self.size.width;
+        // self.info.h = self.size.height;
+        // let now = std::time::Instant::now();
+        // if !self.pause {
+        //     self.info.time += (now.checked_duration_since(self.last_time))
+        //         .unwrap_or_default()
+        //         .as_secs_f32()
+        //         * self.progress_speed;
+        // }
+        // self.last_time = now;
+        // self.queue
+        //     .write_buffer(&self.info_buffer, 0, bytemuck::cast_slice(&[self.info]));
     }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -375,7 +339,7 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_bind_group(0, &self.info_bind_group, &[]);
+            //render_pass.set_bind_group(0, &self.info_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             //render_pass.draw(0..3, 0..1);
