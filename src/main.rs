@@ -25,6 +25,8 @@ async fn run() {
             width: 630,
             height: 500,
         }))
+        // for now
+        .with_resizable(false)
         .with_title("Cellumina")
         //.with_fullscreen(Some(winit::window::Fullscreen::Borderless(None)))
         .build(&event_loop)
