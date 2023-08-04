@@ -28,19 +28,19 @@ pub struct State {
 /// Vertices forming the corners of a rectangle
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.5, -0.5, 0.0],
+        position: [-1., -1., 0.0],
         tex_coords: [0., 1.],
     },
     Vertex {
-        position: [0.5, -0.5, 0.0],
+        position: [1., -1., 0.0],
         tex_coords: [1., 1.],
     },
     Vertex {
-        position: [-0.5, 0.5, 0.0],
+        position: [-1., 1., 0.0],
         tex_coords: [0., 0.],
     },
     Vertex {
-        position: [0.5, 0.5, 0.0],
+        position: [1., 1., 0.0],
         tex_coords: [1., 0.],
     },
 ];
