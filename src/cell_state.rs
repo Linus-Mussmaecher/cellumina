@@ -1,3 +1,7 @@
+use std::time::{Duration, Instant};
+
+use rayon::prelude::ParallelBridge;
+
 /// A struct that represents the drawable state of the cellular automaton
 pub struct CellState {
     /// The current cell state
@@ -8,13 +12,24 @@ pub struct CellState {
     pub cells_bind_group: wgpu::BindGroup,
     /// The size of the automaton
     dimensions: (u32, u32),
+    /// The time between two rule applicatoins
+    interval: Duration,
+    /// The last time the cell state was transformed.
+    last_step: Instant,
 }
 
 impl CellState {
     /// Creates a new cell state full of black cells.
     pub fn new(device: &wgpu::Device) -> (Self, wgpu::BindGroupLayout) {
-        let dimensions = (1920, 1080);
-        let cells = image::ImageBuffer::from_pixel(dimensions.0, dimensions.1, image::Rgba([0; 4]));
+        let dimensions = (200, 100);
+        let mut cells =
+            image::ImageBuffer::from_pixel(dimensions.0, dimensions.1, image::Rgba([0; 4]));
+
+        for (index, pixel) in cells.pixels_mut().enumerate() {
+            if index < 200 {
+                *pixel = image::Rgba([255; 4]);
+            }
+        }
 
         // a texture - note that this is more of a 'storage location' and does not know anything of the bytes yet! Only the size needs to fit.
         let cells_texture = device.create_texture(&wgpu::TextureDescriptor {
@@ -103,6 +118,8 @@ impl CellState {
                 texture: cells_texture,
                 cells_bind_group,
                 dimensions,
+                interval: Duration::from_secs_f32(0.5),
+                last_step: Instant::now(),
             },
             cells_bind_group_layout,
         )
@@ -137,10 +154,20 @@ impl CellState {
 
     /// Applies all rules to update
     pub fn update(&mut self) {
-        for (index, pixel) in self.cells.pixels_mut().enumerate() {
-            let x = (index % (1920 * 4)) as u8;
-            let y = (index / (1920 * 4)) as u8;
-            *pixel = image::Rgba([y % 128, x % 64 + 32, x % 32, 0]);
+        if Instant::now() - self.last_step < self.interval {
+            return;
         }
+        self.last_step = Instant::now();
+
+        let mut next_cells = self.cells.clone();
+
+        for (index, pixel) in next_cells.pixels_mut().enumerate() {
+            *pixel = *self.cells.get_pixel(
+                index as u32 % self.dimensions.0,
+                (index as u32 / self.dimensions.0).wrapping_sub(1) % self.dimensions.1,
+            );
+        }
+
+        self.cells = next_cells;
     }
 }
