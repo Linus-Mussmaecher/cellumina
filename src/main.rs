@@ -9,6 +9,7 @@ use winit::{
     window::WindowBuilder,
 };
 
+mod cell_state;
 mod state;
 
 fn main() {
