@@ -1,7 +1,5 @@
 use std::time::{Duration, Instant};
 
-use rayon::prelude::ParallelBridge;
-
 /// A struct that represents the drawable state of the cellular automaton
 pub struct CellState {
     /// The current cell state
