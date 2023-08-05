@@ -1,15 +1,16 @@
 use std::time::{Duration, Instant};
 
+use grid::Grid;
+
 /// A struct that represents the drawable state of the cellular automaton
 pub struct CellState {
     /// The current cell state
-    cells: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+    //cells: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+    cell_grid: Grid<char>,
     /// The current texture
     texture: wgpu::Texture,
     /// The bind group used to draw the cell to the image.
     pub cells_bind_group: wgpu::BindGroup,
-    /// The size of the automaton
-    dimensions: (u32, u32),
     /// The time between two rule applicatoins
     interval: Duration,
     /// The last time the cell state was transformed.
@@ -17,24 +18,36 @@ pub struct CellState {
 }
 
 impl CellState {
+    pub fn grid_to_texture(grid: &Grid<char>) -> image::ImageBuffer<image::Rgba<u8>, Vec<u8>> {
+        image::ImageBuffer::from_fn(grid.size().0 as u32, grid.size().1 as u32, |x, y| {
+            image::Rgba(match grid[x as usize][y as usize] {
+                ' ' => [255; 4],
+                'X' => [232, 212, 100, 255],
+                _ => [0; 4],
+            })
+        })
+    }
+
     /// Creates a new cell state full of black cells.
     pub fn new(device: &wgpu::Device) -> (Self, wgpu::BindGroupLayout) {
-        let dimensions = (200, 100);
-        let mut cells =
-            image::ImageBuffer::from_pixel(dimensions.0, dimensions.1, image::Rgba([0; 4]));
+        let mut cell_grid = Grid::from_vec(vec![' '; 100 * 50], 50);
+        cell_grid[1][0] = 'X';
+        cell_grid[2][1] = 'X';
+        cell_grid[0][2] = 'X';
+        cell_grid[1][2] = 'X';
+        cell_grid[2][2] = 'X';
 
-        for (index, pixel) in cells.pixels_mut().enumerate() {
-            if index < 200 {
-                *pixel = image::Rgba([255; 4]);
-            }
-        }
+        cell_grid[10][30] = 'X';
+        cell_grid[11][30] = 'X';
+        cell_grid[10][31] = 'X';
+        cell_grid[11][31] = 'X';
 
         // a texture - note that this is more of a 'storage location' and does not know anything of the bytes yet! Only the size needs to fit.
         let cells_texture = device.create_texture(&wgpu::TextureDescriptor {
             // the size of the texture
             size: wgpu::Extent3d {
-                width: dimensions.0,
-                height: dimensions.1,
+                width: cell_grid.size().0 as u32,
+                height: cell_grid.size().1 as u32,
                 // ??
                 depth_or_array_layers: 1,
             },
@@ -112,11 +125,10 @@ impl CellState {
 
         (
             Self {
-                cells,
+                cell_grid,
                 texture: cells_texture,
                 cells_bind_group,
-                dimensions,
-                interval: Duration::from_secs_f32(0.5),
+                interval: Duration::from_secs_f32(0.1),
                 last_step: Instant::now(),
             },
             cells_bind_group_layout,
@@ -133,17 +145,17 @@ impl CellState {
                 aspect: wgpu::TextureAspect::All,
             },
             // actual pixel data
-            &self.cells,
+            &Self::grid_to_texture(&self.cell_grid),
             // internal layout
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * self.dimensions.0),
-                rows_per_image: Some(self.dimensions.1),
+                bytes_per_row: Some(4 * self.cell_grid.size().0 as u32),
+                rows_per_image: Some(self.cell_grid.size().1 as u32),
             },
             // size as above
             wgpu::Extent3d {
-                width: self.dimensions.0,
-                height: self.dimensions.1,
+                width: self.cell_grid.size().0 as u32,
+                height: self.cell_grid.size().1 as u32,
                 // ??
                 depth_or_array_layers: 1,
             },
@@ -157,15 +169,31 @@ impl CellState {
         }
         self.last_step = Instant::now();
 
-        let mut next_cells = self.cells.clone();
+        let w = self.cell_grid.size().0;
+        let h = self.cell_grid.size().1;
 
-        for (index, pixel) in next_cells.pixels_mut().enumerate() {
-            *pixel = *self.cells.get_pixel(
-                index as u32 % self.dimensions.0,
-                (index as u32 / self.dimensions.0).wrapping_sub(1) % self.dimensions.1,
-            );
+        let mut next_cells = Grid::new(w, h);
+
+        for x in 0..w {
+            for y in 0..h {
+                let mut count = 0;
+                for x_del in 0..3 {
+                    for y_del in 0..3 {
+                        if self.cell_grid[(x + w + x_del - 1) % w][(y + h + y_del - 1) % h] == 'X'
+                            && (x_del != 1 || y_del != 1)
+                        {
+                            count += 1;
+                        }
+                    }
+                }
+                next_cells[x][y] = match count {
+                    3 => 'X',
+                    2 => self.cell_grid[x][y],
+                    _ => ' ',
+                };
+            }
         }
 
-        self.cells = next_cells;
+        self.cell_grid = next_cells;
     }
 }
