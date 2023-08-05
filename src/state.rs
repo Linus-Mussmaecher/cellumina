@@ -131,6 +131,12 @@ impl State {
         };
         surface.configure(&device, &config);
 
+        // +-------------------------------------------------------------+
+        // |                                                             |
+        // |    Everything above can be kept for most kinds of drawing   |
+        // |                                                             |
+        // +-------------------------------------------------------------+
+
         // Create the state of cells
         let (cell_state, cells_bind_group_layout) = CellState::new(&device);
 
@@ -208,7 +214,6 @@ impl State {
             config,
             size,
             window,
-            //pause: false,
             render_pipeline,
             vertex_buffer,
             index_buffer,
