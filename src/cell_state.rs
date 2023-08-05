@@ -24,8 +24,8 @@ impl CellState {
     pub fn grid_to_texture(grid: &Grid<char>) -> image::ImageBuffer<image::Rgba<u8>, Vec<u8>> {
         image::ImageBuffer::from_fn(grid.size().0 as u32, grid.size().1 as u32, |x, y| {
             image::Rgba(match grid[x as usize][y as usize] {
-                ' ' => [255; 4],
-                'X' => [232, 212, 100, 255],
+                ' ' => [0; 4],             //[255; 4],
+                'X' => [86, 181, 78, 255], //[232, 212, 100, 255],
                 _ => [0; 4],
             })
         })
