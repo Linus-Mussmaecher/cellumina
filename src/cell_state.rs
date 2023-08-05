@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    path::Path,
+    time::{Duration, Instant},
+};
 
 use grid::Grid;
 
@@ -28,20 +31,36 @@ impl CellState {
         })
     }
 
+    pub fn new_from_file(
+        device: &wgpu::Device,
+        path: impl AsRef<Path>,
+    ) -> (Self, wgpu::BindGroupLayout) {
+        let lines = std::fs::read_to_string(path).expect("Could not read file.");
+        println!("Here.");
+        let cols = lines.lines().next().unwrap().len() - 1;
+        let mut grid = grid::Grid::<char>::new(0, cols);
+        println!("There.");
+
+        for line in lines.lines() {
+            let mut string = line.to_string();
+            string = string.replace('\n', "");
+            string.truncate(cols);
+            while string.len() < cols + 1 {
+                string.push(' ');
+            }
+            grid.push_row(string.chars().collect());
+            println!("Pushed row: {}", string);
+        }
+
+        grid = grid.transpose();
+
+        println!("Grid: {} x {}", grid.size().0, grid.size().1);
+
+        Self::new(device, grid)
+    }
+
     /// Creates a new cell state full of black cells.
-    pub fn new(device: &wgpu::Device) -> (Self, wgpu::BindGroupLayout) {
-        let mut cell_grid = Grid::from_vec(vec![' '; 100 * 50], 50);
-        cell_grid[1][0] = 'X';
-        cell_grid[2][1] = 'X';
-        cell_grid[0][2] = 'X';
-        cell_grid[1][2] = 'X';
-        cell_grid[2][2] = 'X';
-
-        cell_grid[10][30] = 'X';
-        cell_grid[11][30] = 'X';
-        cell_grid[10][31] = 'X';
-        cell_grid[11][31] = 'X';
-
+    pub fn new(device: &wgpu::Device, cell_grid: Grid<char>) -> (Self, wgpu::BindGroupLayout) {
         // a texture - note that this is more of a 'storage location' and does not know anything of the bytes yet! Only the size needs to fit.
         let cells_texture = device.create_texture(&wgpu::TextureDescriptor {
             // the size of the texture
