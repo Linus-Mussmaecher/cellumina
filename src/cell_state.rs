@@ -3,12 +3,14 @@ use std::{
     time::{Duration, Instant},
 };
 
-use grid::Grid;
+use crate::rule::{CountingRule, Rule};
+
+pub type CellGrid = grid::Grid<char>;
 
 /// A struct that represents the drawable state of the cellular automaton
 pub struct CellState {
     /// The current cell state
-    cell_grid: Grid<char>,
+    cell_grid: CellGrid,
     /// The current texture
     texture: wgpu::Texture,
     /// The bind group used to draw the cell to the image.
@@ -17,12 +19,15 @@ pub struct CellState {
     interval: Duration,
     /// The last time the cell state was transformed.
     last_step: Instant,
+
+    /// The rule
+    rule: Box<dyn Rule>,
 }
 
 impl CellState {
     /// Turns a grid into a usable image to be turned into a texture.
     /// Rows of the grid turn into image height, columns into width.
-    pub fn grid_to_texture(grid: &Grid<char>) -> image::ImageBuffer<image::Rgba<u8>, Vec<u8>> {
+    pub fn grid_to_texture(grid: &CellGrid) -> image::ImageBuffer<image::Rgba<u8>, Vec<u8>> {
         image::ImageBuffer::from_fn(grid.size().1 as u32, grid.size().0 as u32, |x, y| {
             image::Rgba(match grid[y as usize][x as usize] {
                 ' ' => [0; 4],             //[255; 4],
@@ -74,7 +79,7 @@ impl CellState {
     }
 
     /// Creates a new cell state full of black cells.
-    pub fn new(device: &wgpu::Device, cell_grid: Grid<char>) -> (Self, wgpu::BindGroupLayout) {
+    pub fn new(device: &wgpu::Device, cell_grid: CellGrid) -> (Self, wgpu::BindGroupLayout) {
         // a texture - note that this is more of a 'storage location' and does not know anything of the bytes yet! Only the size needs to fit.
         let cells_texture = device.create_texture(&wgpu::TextureDescriptor {
             // the size of the texture
@@ -163,6 +168,7 @@ impl CellState {
                 cells_bind_group,
                 interval: Duration::from_secs_f32(0.1),
                 last_step: Instant::now(),
+                rule: Box::new(CountingRule::new_gol()),
             },
             cells_bind_group_layout,
         )
@@ -196,43 +202,43 @@ impl CellState {
         );
     }
 
-    /// Applies all rules to update
+    /// Checks if another update is scheduled and applies it.
+    /// Returns wether an update was applied.
     pub fn update(&mut self) -> bool {
         if Instant::now() - self.last_step < self.interval {
             return false;
         }
         self.last_step = Instant::now();
 
-        let w = self.cell_grid.size().1;
-        let h = self.cell_grid.size().0;
+        // let w = self.cell_grid.size().1;
+        // let h = self.cell_grid.size().0;
 
-        //let pre = Instant::now();
+        // let mut next_cells = CellGrid::new(h, w);
 
-        let mut next_cells = Grid::new(h, w);
+        // for row in 0..h {
+        //     for col in 0..w {
+        //         let mut count = 0;
+        //         for row_del in 0..3 {
+        //             for col_del in 0..3 {
+        //                 if self.cell_grid[(row + h + row_del - 1) % h][(col + w + col_del - 1) % w]
+        //                     == 'X'
+        //                     && (col_del != 1 || row_del != 1)
+        //                 {
+        //                     count += 1;
+        //                 }
+        //             }
+        //         }
+        //         next_cells[row][col] = match count {
+        //             3 => 'X',
+        //             2 => self.cell_grid[row][col],
+        //             _ => ' ',
+        //         };
+        //     }
+        // }
 
-        for x in 0..w {
-            for y in 0..h {
-                let mut count = 0;
-                for x_del in 0..3 {
-                    for y_del in 0..3 {
-                        if self.cell_grid[(y + h + y_del - 1) % h][(x + w + x_del - 1) % w] == 'X'
-                            && (x_del != 1 || y_del != 1)
-                        {
-                            count += 1;
-                        }
-                    }
-                }
-                next_cells[y][x] = match count {
-                    3 => 'X',
-                    2 => self.cell_grid[y][x],
-                    _ => ' ',
-                };
-            }
-        }
+        // self.cell_grid = next_cells;
 
-        //println!("Time: {}", (Instant::now() - pre).as_secs_f32());
-
-        self.cell_grid = next_cells;
+        self.cell_grid = self.rule.transform(&self.cell_grid);
         true
     }
 }
