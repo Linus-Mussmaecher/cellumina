@@ -10,6 +10,7 @@ use winit::{
 };
 
 mod cell_state;
+mod rule;
 mod state;
 
 fn main() {
