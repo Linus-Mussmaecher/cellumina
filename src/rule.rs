@@ -72,7 +72,7 @@ impl Rule for CountingRule {
     }
 }
 
-pub struct EnvironmentRule<const S: usize> {
+pub struct EnvironmentRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
     range_vert: usize,
@@ -80,14 +80,35 @@ pub struct EnvironmentRule<const S: usize> {
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
     range_hor: usize,
     /// The environemnt rules. Need to be complete.
-    rules: HashMap<[char; S], char>,
+    cell_transform: fn(&[char]) -> char,
 }
 
-impl<const S: usize> EnvironmentRule<S> {}
+impl EnvironmentRule {
+    pub fn new_gol() -> Self {
+        Self {
+            range_vert: 1,
+            range_hor: 1,
+            cell_transform: |env| match env
+                .iter()
+                .enumerate()
+                .map(|val| match val {
+                    (4, 'X') => 0,
+                    (_, 'X') => 1,
+                    _ => 0,
+                })
+                .sum()
+            {
+                2 => env[4],
+                3 => 'X',
+                _ => ' ',
+            },
+        }
+    }
+}
 
-impl<const S: usize> Rule for EnvironmentRule<S> {
+impl Rule for EnvironmentRule {
     fn transform(&self, grid: &CellGrid) -> CellGrid {
-        let mut buffer = [' '; S];
+        let mut buffer = Vec::with_capacity(self.range_hor * self.range_vert);
         let (h, w) = grid.size();
 
         // correction factor to make sure no overflowing subtractions happen
@@ -98,12 +119,14 @@ impl<const S: usize> Rule for EnvironmentRule<S> {
             for col in 0..w {
                 for row_del in 0..=2 * self.range_vert {
                     for col_del in 0..=2 * self.range_hor {
-                        buffer[row_del * (2 * self.range_hor + 1) + col_del] = grid
-                            [row + h + row_del - self.range_vert]
-                            [col + w + col_del - self.range_hor];
+                        buffer.push(
+                            grid[(row + h + row_del - self.range_vert) % h]
+                                [(col + w + col_del - self.range_hor) % w],
+                        );
                     }
                 }
-                res[row][col] = self.rules.get(&buffer).copied().unwrap_or(' ');
+                res[row][col] = (self.cell_transform)(&buffer);
+                buffer.clear();
             }
         }
 

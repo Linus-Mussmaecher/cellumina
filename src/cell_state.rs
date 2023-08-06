@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::rule::{CountingRule, Rule};
+use crate::rule::{CountingRule, EnvironmentRule, Rule};
 
 pub type CellGrid = grid::Grid<char>;
 
@@ -168,7 +168,7 @@ impl CellState {
                 cells_bind_group,
                 interval: Duration::from_secs_f32(0.1),
                 last_step: Instant::now(),
-                rule: Box::new(CountingRule::new_gol()),
+                rule: Box::new(EnvironmentRule::new_gol()),
             },
             cells_bind_group_layout,
         )
@@ -210,35 +210,10 @@ impl CellState {
         }
         self.last_step = Instant::now();
 
-        // let w = self.cell_grid.size().1;
-        // let h = self.cell_grid.size().0;
-
-        // let mut next_cells = CellGrid::new(h, w);
-
-        // for row in 0..h {
-        //     for col in 0..w {
-        //         let mut count = 0;
-        //         for row_del in 0..3 {
-        //             for col_del in 0..3 {
-        //                 if self.cell_grid[(row + h + row_del - 1) % h][(col + w + col_del - 1) % w]
-        //                     == 'X'
-        //                     && (col_del != 1 || row_del != 1)
-        //                 {
-        //                     count += 1;
-        //                 }
-        //             }
-        //         }
-        //         next_cells[row][col] = match count {
-        //             3 => 'X',
-        //             2 => self.cell_grid[row][col],
-        //             _ => ' ',
-        //         };
-        //     }
-        // }
-
-        // self.cell_grid = next_cells;
-
         self.cell_grid = self.rule.transform(&self.cell_grid);
+
+        println!("Time: {}s", (Instant::now() - self.last_step).as_secs_f32());
+
         true
     }
 }
