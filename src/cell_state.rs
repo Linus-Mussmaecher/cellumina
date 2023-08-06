@@ -8,7 +8,6 @@ use grid::Grid;
 /// A struct that represents the drawable state of the cellular automaton
 pub struct CellState {
     /// The current cell state
-    //cells: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
     cell_grid: Grid<char>,
     /// The current texture
     texture: wgpu::Texture,
@@ -21,9 +20,11 @@ pub struct CellState {
 }
 
 impl CellState {
+    /// Turns a grid into a usable image to be turned into a texture.
+    /// Rows of the grid turn into image height, columns into width.
     pub fn grid_to_texture(grid: &Grid<char>) -> image::ImageBuffer<image::Rgba<u8>, Vec<u8>> {
-        image::ImageBuffer::from_fn(grid.size().0 as u32, grid.size().1 as u32, |x, y| {
-            image::Rgba(match grid[x as usize][y as usize] {
+        image::ImageBuffer::from_fn(grid.size().1 as u32, grid.size().0 as u32, |x, y| {
+            image::Rgba(match grid[y as usize][x as usize] {
                 ' ' => [0; 4],             //[255; 4],
                 'X' => [86, 181, 78, 255], //[232, 212, 100, 255],
                 _ => [0; 4],
@@ -31,31 +32,44 @@ impl CellState {
         })
     }
 
+    /// Creates a new cellular automaton from an initial state
     pub fn new_from_file(
         device: &wgpu::Device,
         path: impl AsRef<Path>,
     ) -> (Self, wgpu::BindGroupLayout) {
-        let lines = std::fs::read_to_string(path).expect("Could not read file.");
-        println!("Here.");
-        let cols = lines.lines().next().unwrap().len() - 1;
-        let mut grid = grid::Grid::<char>::new(0, cols);
-        println!("There.");
+        // read file
+        let content = std::fs::read_to_string(path).expect("Could not read file.");
+        // split into lines
+        let lines: Vec<&str> = content.split('\n').collect();
+        // get number of columns (chars in largest line)
+        // subtracting one from each line because of leftover newline
+        let cols = lines
+            .iter()
+            .map(|line| line.len().saturating_sub(1))
+            .max()
+            .unwrap_or_default();
 
-        for line in lines.lines() {
-            let mut string = line.to_string();
-            string = string.replace('\n', "");
-            string.truncate(cols);
-            while string.len() < cols + 1 {
-                string.push(' ');
-            }
-            grid.push_row(string.chars().collect());
-            println!("Pushed row: {}", string);
+        // create grid to hold data
+        let mut grid = grid::Grid::<char>::new(0, cols);
+
+        // iterate over lines and add them to the grid
+        for line in lines {
+            // create char vector
+            let mut chars: Vec<char> = line.chars().collect();
+            // make sure vector is neither to large nor to small
+            chars.resize(cols, ' ');
+            // push to the grid
+            grid.push_row(chars);
         }
 
-        grid = grid.transpose();
+        //TODO: Switch to log?
+        println!(
+            "Initializing Cellular automaton of size {} x {}.",
+            grid.size().1,
+            grid.size().0
+        );
 
-        println!("Grid: {} x {}", grid.size().0, grid.size().1);
-
+        // use basic contstructor with created grid
         Self::new(device, grid)
     }
 
@@ -65,8 +79,8 @@ impl CellState {
         let cells_texture = device.create_texture(&wgpu::TextureDescriptor {
             // the size of the texture
             size: wgpu::Extent3d {
-                width: cell_grid.size().0 as u32,
-                height: cell_grid.size().1 as u32,
+                width: cell_grid.size().1 as u32,
+                height: cell_grid.size().0 as u32,
                 // ??
                 depth_or_array_layers: 1,
             },
@@ -154,7 +168,8 @@ impl CellState {
         )
     }
 
-    pub fn write(&self, queue: &wgpu::Queue) {
+    /// Writes a texture corresponding to this cell_states grid to a texture buffer (as created in the constructor).
+    pub fn write(&mut self, queue: &wgpu::Queue) {
         queue.write_texture(
             // copy destination
             wgpu::ImageCopyTextureBase {
@@ -168,13 +183,13 @@ impl CellState {
             // internal layout
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * self.cell_grid.size().0 as u32),
-                rows_per_image: Some(self.cell_grid.size().1 as u32),
+                bytes_per_row: Some(4 * self.cell_grid.size().1 as u32),
+                rows_per_image: Some(self.cell_grid.size().0 as u32),
             },
             // size as above
             wgpu::Extent3d {
-                width: self.cell_grid.size().0 as u32,
-                height: self.cell_grid.size().1 as u32,
+                width: self.cell_grid.size().1 as u32,
+                height: self.cell_grid.size().0 as u32,
                 // ??
                 depth_or_array_layers: 1,
             },
@@ -182,37 +197,42 @@ impl CellState {
     }
 
     /// Applies all rules to update
-    pub fn update(&mut self) {
+    pub fn update(&mut self) -> bool {
         if Instant::now() - self.last_step < self.interval {
-            return;
+            return false;
         }
         self.last_step = Instant::now();
 
-        let w = self.cell_grid.size().0;
-        let h = self.cell_grid.size().1;
+        let w = self.cell_grid.size().1;
+        let h = self.cell_grid.size().0;
 
-        let mut next_cells = Grid::new(w, h);
+        //let pre = Instant::now();
+
+        let mut next_cells = Grid::new(h, w);
 
         for x in 0..w {
             for y in 0..h {
                 let mut count = 0;
                 for x_del in 0..3 {
                     for y_del in 0..3 {
-                        if self.cell_grid[(x + w + x_del - 1) % w][(y + h + y_del - 1) % h] == 'X'
+                        if self.cell_grid[(y + h + y_del - 1) % h][(x + w + x_del - 1) % w] == 'X'
                             && (x_del != 1 || y_del != 1)
                         {
                             count += 1;
                         }
                     }
                 }
-                next_cells[x][y] = match count {
+                next_cells[y][x] = match count {
                     3 => 'X',
-                    2 => self.cell_grid[x][y],
+                    2 => self.cell_grid[y][x],
                     _ => ' ',
                 };
             }
         }
 
+        //println!("Time: {}", (Instant::now() - pre).as_secs_f32());
+
         self.cell_grid = next_cells;
+        true
     }
 }

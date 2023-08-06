@@ -143,7 +143,7 @@ impl State {
         CellState::new_from_file(&device, "./src/gol_init.txt");
 
         // do a one-time-write
-        cell_state.write(&queue);
+        //cell_state.write(&queue);
 
         // create & compile the shaders
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
@@ -258,8 +258,9 @@ impl State {
     }
 
     pub(crate) fn update(&mut self) {
-        self.cell_state.update();
-        self.cell_state.write(&self.queue);
+        if self.cell_state.update(){
+            self.cell_state.write(&self.queue);
+        }
     }
 
     pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
