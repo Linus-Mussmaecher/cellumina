@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::rule::{CountingRule, EnvironmentRule, Rule};
+use crate::rule::*;
 
 pub type CellGrid = grid::Grid<char>;
 
@@ -60,7 +60,7 @@ impl CellState {
         // iterate over lines and add them to the grid
         for line in lines {
             // create char vector
-            let mut chars: Vec<char> = line.chars().collect();
+            let mut chars: Vec<char> = line.replace('\r', "").chars().collect();
             // make sure vector is neither to large nor to small
             chars.resize(cols, ' ');
             // push to the grid
@@ -168,7 +168,7 @@ impl CellState {
                 cells_bind_group,
                 interval: Duration::from_secs_f32(0.1),
                 last_step: Instant::now(),
-                rule: Box::new(EnvironmentRule::new_gol()),
+                rule: Box::new(PatternRule::new_sand()),
             },
             cells_bind_group_layout,
         )
