@@ -33,6 +33,7 @@ impl CellState {
                 ' ' => [0; 4],             //[255; 4],
                 'X' => [86, 181, 78, 255], //[232, 212, 100, 255],
                 'F' => [235, 64, 52, 255],
+                'S' => [235, 125, 125, 255],
                 _ => [0; 4],
             })
         })
@@ -213,7 +214,7 @@ impl CellState {
 
         self.cell_grid = self.rule.transform(&self.cell_grid);
 
-        println!("Time: {}s", (Instant::now() - self.last_step).as_secs_f32());
+        println!("Time: {}s", self.last_step.elapsed().as_secs_f32());
 
         true
     }
