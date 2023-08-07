@@ -65,22 +65,32 @@ impl PatternRule {
                     after: grid::grid![[' ', ' ', ' ']['X', 'X', 'X']],
                 },
                 Pattern {
-                    chance: 1.,
+                    chance: 0.6,
+                    before: grid::grid![['F'][' ']],
+                    after: grid::grid![[' ']['F']],
+                },
+                Pattern {
+                    chance: 0.8,
                     before: grid::grid![['X', 'F']],
                     after: grid::grid![['F', 'F']],
                 },
                 Pattern {
-                    chance: 1.,
+                    chance: 0.8,
                     before: grid::grid![['F', 'X']],
                     after: grid::grid![['F', 'F']],
                 },
                 Pattern {
-                    chance: 1.,
+                    chance: 0.8,
+                    before: grid::grid![['F']['X']],
+                    after: grid::grid![['F']['F']],
+                },
+                Pattern {
+                    chance: 0.8,
                     before: grid::grid![['X', '*']['*', 'F']],
                     after: grid::grid![['F', '*']['*', '*']],
                 },
                 Pattern {
-                    chance: 1.,
+                    chance: 0.8,
                     before: grid::grid![['*', 'X']['F', '*']],
                     after: grid::grid![['*', 'F']['*', '*']],
                 },
@@ -88,6 +98,21 @@ impl PatternRule {
                     chance: 0.1,
                     before: grid::grid![['F']],
                     after: grid::grid![[' ']],
+                },
+                Pattern {
+                    chance: 0.1,
+                    before: grid::grid![[' ', 'F']],
+                    after: grid::grid![['F', ' ']],
+                },
+                Pattern {
+                    chance: 0.1,
+                    before: grid::grid![['F', ' ']],
+                    after: grid::grid![[' ', 'F']],
+                },
+                Pattern {
+                    chance: 0.05,
+                    before: grid::grid![['*']['S']],
+                    after: grid::grid![['F']['S']],
                 },
             ],
         }
@@ -108,7 +133,10 @@ impl Rule for PatternRule {
                     let (p_rows, p_cols) = pattern.after.size();
 
                     // check if pattern would move out of bounds
-                    if row + p_rows > rows || col + p_cols > cols {
+                    if row + p_rows > rows
+                        || col + p_cols > cols
+                        || rand::random::<f32>() > pattern.chance
+                    {
                         continue 'pattern_loop;
                     }
 
