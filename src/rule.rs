@@ -5,6 +5,96 @@ use crate::cell_state::CellGrid;
 pub trait Rule {
     fn transform(&self, grid: &CellGrid) -> CellGrid;
 }
+
+pub struct MultiRule {
+    rules: Vec<Box<dyn Rule>>,
+}
+
+impl Rule for MultiRule {
+    fn transform(&self, grid: &CellGrid) -> CellGrid {
+        let mut res = grid.clone();
+        for rule in &self.rules {
+            res = rule.transform(&res);
+        }
+        res
+    }
+}
+
+pub struct PatternRule {
+    chance: f32,
+    pattern: CellGrid,
+    replacement: CellGrid,
+}
+
+impl PatternRule {
+    pub fn new_sand() -> MultiRule {
+        MultiRule {
+            rules: vec![
+                // Box::new(Self {
+                //     chance: 1.,
+                //     pattern: grid::grid![['X'][' '][' ']],
+                //     replacement: grid::grid![[' '][' ']['X']],
+                // }),
+                Box::new(Self {
+                    chance: 1.,
+                    pattern: grid::grid![['X'][' ']],
+                    replacement: grid::grid![[' ']['X']],
+                }),
+                Box::new(Self {
+                    chance: 1.,
+                    pattern: grid::grid![['X', ' ']['X', ' ']],
+                    replacement: grid::grid![[' ', ' ']['X', 'X']],
+                }),
+                Box::new(Self {
+                    chance: 1.,
+                    pattern: grid::grid![[' ', 'X'][' ', 'X']],
+                    replacement: grid::grid![[' ', ' ']['X', 'X']],
+                }),
+            ],
+        }
+    }
+}
+
+impl Rule for PatternRule {
+    fn transform(&self, grid: &CellGrid) -> CellGrid {
+        let mut res = grid.clone();
+        let mut mutated = grid::Grid::new(grid.rows(), grid.cols());
+        mutated.fill(false);
+
+        let (rows, cols) = grid.size();
+        let (p_rows, p_cols) = self.replacement.size();
+
+        for row in 0..(rows - p_rows + 1) {
+            'outer: for col in 0..(cols - p_cols + 1) {
+                for row_del in 0..p_rows {
+                    for col_del in 0..p_cols {
+                        if (self.pattern[row_del][col_del] != '*'
+                            && grid[row + row_del][col + col_del] != self.pattern[row_del][col_del])
+                            || (self.replacement[row_del][col_del] != '*'
+                                && mutated[row + row_del][col + col_del])
+                        {
+                            continue 'outer;
+                        }
+                    }
+                }
+                // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
+
+                for row_del in 0..p_rows {
+                    for col_del in 0..p_cols {
+                        let rep = self.replacement[row_del][col_del];
+                        if rep != '*' {
+                            res[row + row_del][col + col_del] = rep;
+                            mutated[row + row_del][col + col_del] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        res
+    }
+}
+
 pub struct CountingRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.

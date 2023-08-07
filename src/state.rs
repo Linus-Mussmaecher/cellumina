@@ -140,7 +140,7 @@ impl State {
         // Create the state of cells
         let (cell_state, cells_bind_group_layout) = 
         //CellState::new_empty(&device, 100, 50);
-        CellState::new_from_file(&device, "./src/gol_init.txt");
+        CellState::new_from_file(&device, "./src/sand_init.txt");
 
         // do a one-time-write
         //cell_state.write(&queue);
