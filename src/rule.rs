@@ -185,7 +185,7 @@ pub struct EnvironmentRule {
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
     range_hor: usize,
     /// The environemnt rules. Need to be complete.
-    cell_transform: fn(&[char]) -> char,
+    cell_transform: fn(&CellGrid) -> char,
 }
 
 impl EnvironmentRule {
@@ -203,7 +203,7 @@ impl EnvironmentRule {
                 })
                 .sum()
             {
-                2 => env[4],
+                2 => env[1][1],
                 3 => 'X',
                 _ => ' ',
             },
@@ -213,7 +213,7 @@ impl EnvironmentRule {
 
 impl Rule for EnvironmentRule {
     fn transform(&self, grid: &CellGrid) -> CellGrid {
-        let mut buffer = Vec::with_capacity(self.range_hor * self.range_vert);
+        let mut buffer = grid::Grid::new(2 * self.range_vert + 1, 2 * self.range_hor + 1);
         let (h, w) = grid.size();
 
         // correction factor to make sure no overflowing subtractions happen
@@ -224,14 +224,11 @@ impl Rule for EnvironmentRule {
             for col in 0..w {
                 for row_del in 0..=2 * self.range_vert {
                     for col_del in 0..=2 * self.range_hor {
-                        buffer.push(
-                            grid[(row + h + row_del - self.range_vert) % h]
-                                [(col + w + col_del - self.range_hor) % w],
-                        );
+                        buffer[row_del][col_del] = grid[(row + h + row_del - self.range_vert) % h]
+                            [(col + w + col_del - self.range_hor) % w];
                     }
                 }
                 res[row][col] = (self.cell_transform)(&buffer);
-                buffer.clear();
             }
         }
 
