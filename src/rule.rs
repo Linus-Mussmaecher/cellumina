@@ -1,3 +1,5 @@
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+
 use crate::cell_state::CellGrid;
 
 pub trait Rule {
@@ -124,55 +126,72 @@ impl PatternRule {
 
 impl Rule for PatternRule {
     fn transform(&self, grid: &CellGrid) -> CellGrid {
-        let mut res = grid.clone();
-        let mut mutated = grid::Grid::new(grid.rows(), grid.cols());
-        mutated.fill(false);
-
         let (rows, cols) = grid.size();
 
-        for row in 0..rows {
-            for col in 0..cols {
-                'pattern_loop: for pattern in self.patterns.iter() {
-                    let (p_rows, p_cols) = pattern.after.size();
+        let mut clear_grid = grid::Grid::new(rows, cols);
+        clear_grid.fill('*');
 
-                    // check if pattern would move out of bounds
-                    if row + p_rows > rows
-                        || col + p_cols > cols
-                        || rand::random::<f32>() > pattern.chance
-                    {
-                        continue 'pattern_loop;
-                    }
+        let replacements = self
+            .patterns
+            .par_iter()
+            .map(|pattern| {
+                let mut partial_res = clear_grid.clone();
+                for row in 0..rows {
+                    'pattern_loop: for col in 0..cols {
+                        let (p_rows, p_cols) = pattern.after.size();
 
-                    // check if pattern is applicable
-                    for row_del in 0..p_rows {
-                        for col_del in 0..p_cols {
-                            if (
-                                // check if pattern and grid agree on this cell
-                                pattern.before[row_del][col_del] != '*'
-                                && grid[row + row_del][col + col_del]
-                                    != pattern.before[row_del][col_del])
-                                // check if the cells this pattern wants to mutate are still mutatetable
-                                || (pattern.after[row_del][col_del] != '*'
-                                    && mutated[row + row_del][col + col_del])
-                            {
-                                continue 'pattern_loop;
+                        // check if pattern would move out of bounds
+                        if row + p_rows > rows
+                            || col + p_cols > cols
+                            || rand::random::<f32>() > pattern.chance
+                        {
+                            continue 'pattern_loop;
+                        }
+
+                        // check if pattern is applicable
+                        for row_del in 0..p_rows {
+                            for col_del in 0..p_cols {
+                                if pattern.before[row_del][col_del] != '*'
+                                    && grid[row + row_del][col + col_del]
+                                        != pattern.before[row_del][col_del]
+                                {
+                                    continue 'pattern_loop;
+                                }
                             }
                         }
-                    }
 
-                    // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
+                        // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
 
-                    // mutate the cells as described by this pattern
-                    for row_del in 0..p_rows {
-                        for col_del in 0..p_cols {
-                            let rep = pattern.after[row_del][col_del];
-                            if rep != '*' {
-                                res[row + row_del][col + col_del] = rep;
-                                mutated[row + row_del][col + col_del] = true;
+                        // mutate the cells as described by this pattern
+                        for row_del in 0..p_rows {
+                            for col_del in 0..p_cols {
+                                let rep = pattern.after[row_del][col_del];
+                                if rep != '*' {
+                                    partial_res[row + row_del][col + col_del] = rep;
+                                }
                             }
                         }
                     }
                 }
+                partial_res
+            })
+            .reduce(
+                || clear_grid.clone(),
+                |mut grid_a, grid_b| {
+                    for (index, cell) in grid_a.iter_mut().enumerate() {
+                        if grid_b[index / cols][index % cols] != '*' {
+                            *cell = grid_b[index / cols][index % cols];
+                        }
+                    }
+                    grid_a
+                },
+            );
+
+        let mut res = grid.clone();
+
+        for (index, cell) in res.iter_mut().enumerate() {
+            if replacements[index / cols][index % cols] != '*' {
+                *cell = replacements[index / cols][index % cols];
             }
         }
 
