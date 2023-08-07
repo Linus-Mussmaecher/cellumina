@@ -21,35 +21,74 @@ impl Rule for MultiRule {
 }
 
 pub struct PatternRule {
+    patterns: Vec<Pattern>,
+}
+
+pub struct Pattern {
     chance: f32,
-    pattern: CellGrid,
-    replacement: CellGrid,
+    before: CellGrid,
+    after: CellGrid,
 }
 
 impl PatternRule {
-    pub fn new_sand() -> MultiRule {
-        MultiRule {
-            rules: vec![
-                // Box::new(Self {
-                //     chance: 1.,
-                //     pattern: grid::grid![['X'][' '][' ']],
-                //     replacement: grid::grid![[' '][' ']['X']],
-                // }),
-                Box::new(Self {
+    pub fn new_sand() -> Self {
+        Self {
+            patterns: vec![
+                Pattern {
                     chance: 1.,
-                    pattern: grid::grid![['X'][' ']],
-                    replacement: grid::grid![[' ']['X']],
-                }),
-                Box::new(Self {
+                    before: grid::grid![['X'][' '][' ']],
+                    after: grid::grid![[' '][' ']['X']],
+                },
+                Pattern {
                     chance: 1.,
-                    pattern: grid::grid![['X', ' ']['X', ' ']],
-                    replacement: grid::grid![[' ', ' ']['X', 'X']],
-                }),
-                Box::new(Self {
+                    before: grid::grid![['X'][' ']],
+                    after: grid::grid![[' ']['X']],
+                },
+                Pattern {
                     chance: 1.,
-                    pattern: grid::grid![[' ', 'X'][' ', 'X']],
-                    replacement: grid::grid![[' ', ' ']['X', 'X']],
-                }),
+                    before: grid::grid![['X', ' ']['X', ' ']],
+                    after: grid::grid![[' ', ' ']['X', 'X']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![[' ', 'X'][' ', 'X']],
+                    after: grid::grid![[' ', ' ']['X', 'X']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![['X', ' ', ' ']['X', 'X', ' ']],
+                    after: grid::grid![[' ', ' ', ' ']['X', 'X', 'X']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![[' ', ' ', 'X'][' ', 'X', 'X']],
+                    after: grid::grid![[' ', ' ', ' ']['X', 'X', 'X']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![['X', 'F']],
+                    after: grid::grid![['F', 'F']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![['F', 'X']],
+                    after: grid::grid![['F', 'F']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![['X', '*']['*', 'F']],
+                    after: grid::grid![['F', '*']['*', '*']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![['*', 'X']['F', '*']],
+                    after: grid::grid![['*', 'F']['*', '*']],
+                },
+                Pattern {
+                    chance: 0.1,
+                    before: grid::grid![['F']],
+                    after: grid::grid![[' ']],
+                },
             ],
         }
     }
@@ -62,29 +101,44 @@ impl Rule for PatternRule {
         mutated.fill(false);
 
         let (rows, cols) = grid.size();
-        let (p_rows, p_cols) = self.replacement.size();
 
-        for row in 0..(rows - p_rows + 1) {
-            'outer: for col in 0..(cols - p_cols + 1) {
-                for row_del in 0..p_rows {
-                    for col_del in 0..p_cols {
-                        if (self.pattern[row_del][col_del] != '*'
-                            && grid[row + row_del][col + col_del] != self.pattern[row_del][col_del])
-                            || (self.replacement[row_del][col_del] != '*'
-                                && mutated[row + row_del][col + col_del])
-                        {
-                            continue 'outer;
+        for row in 0..rows {
+            for col in 0..cols {
+                'pattern_loop: for pattern in self.patterns.iter() {
+                    let (p_rows, p_cols) = pattern.after.size();
+
+                    // check if pattern would move out of bounds
+                    if row + p_rows > rows || col + p_cols > cols {
+                        continue 'pattern_loop;
+                    }
+
+                    // check if pattern is applicable
+                    for row_del in 0..p_rows {
+                        for col_del in 0..p_cols {
+                            if (
+                                // check if pattern and grid agree on this cell
+                                pattern.before[row_del][col_del] != '*'
+                                && grid[row + row_del][col + col_del]
+                                    != pattern.before[row_del][col_del])
+                                // check if the cells this pattern wants to mutate are still mutatetable
+                                || (pattern.after[row_del][col_del] != '*'
+                                    && mutated[row + row_del][col + col_del])
+                            {
+                                continue 'pattern_loop;
+                            }
                         }
                     }
-                }
-                // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
 
-                for row_del in 0..p_rows {
-                    for col_del in 0..p_cols {
-                        let rep = self.replacement[row_del][col_del];
-                        if rep != '*' {
-                            res[row + row_del][col + col_del] = rep;
-                            mutated[row + row_del][col + col_del] = true;
+                    // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
+
+                    // mutate the cells as described by this pattern
+                    for row_del in 0..p_rows {
+                        for col_del in 0..p_cols {
+                            let rep = pattern.after[row_del][col_del];
+                            if rep != '*' {
+                                res[row + row_del][col + col_del] = rep;
+                                mutated[row + row_del][col + col_del] = true;
+                            }
                         }
                     }
                 }
