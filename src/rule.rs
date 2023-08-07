@@ -1,5 +1,3 @@
-use std::{collections::HashMap, usize};
-
 use crate::cell_state::CellGrid;
 
 pub trait Rule {
@@ -194,6 +192,7 @@ pub struct EnvironmentRule {
 }
 
 impl EnvironmentRule {
+    #[allow(dead_code)]
     pub fn new_gol() -> Self {
         Self {
             range_vert: 1,
