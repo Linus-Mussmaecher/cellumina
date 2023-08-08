@@ -212,7 +212,7 @@ impl CellState {
         }
         self.last_step = Instant::now();
 
-        self.cell_grid = self.rule.transform(&self.cell_grid);
+        self.rule.transform(&mut self.cell_grid);
 
         println!("Time: {}s", self.last_step.elapsed().as_secs_f32());
 

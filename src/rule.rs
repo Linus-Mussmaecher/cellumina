@@ -1,9 +1,9 @@
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::cell_state::CellGrid;
 
 pub trait Rule {
-    fn transform(&self, grid: &CellGrid) -> CellGrid;
+    fn transform(&self, grid: &mut CellGrid);
 }
 
 pub struct MultiRule {
@@ -11,12 +11,10 @@ pub struct MultiRule {
 }
 
 impl Rule for MultiRule {
-    fn transform(&self, grid: &CellGrid) -> CellGrid {
-        let mut res = grid.clone();
+    fn transform(&self, grid: &mut CellGrid) {
         for rule in &self.rules {
-            res = rule.transform(&res);
+            rule.transform(grid);
         }
-        res
     }
 }
 
@@ -125,17 +123,15 @@ impl PatternRule {
 }
 
 impl Rule for PatternRule {
-    fn transform(&self, grid: &CellGrid) -> CellGrid {
+    fn transform(&self, grid: &mut CellGrid) {
         let (rows, cols) = grid.size();
 
-        let mut clear_grid = grid::Grid::new(rows, cols);
-        clear_grid.fill('*');
+        let mut replacements = Vec::new();
 
-        let replacements = self
-            .patterns
+        self.patterns
             .par_iter()
             .map(|pattern| {
-                let mut partial_res = clear_grid.clone();
+                let mut partial_res = Vec::new();
                 for row in 0..rows {
                     'pattern_loop: for col in 0..cols {
                         let (p_rows, p_cols) = pattern.after.size();
@@ -161,41 +157,34 @@ impl Rule for PatternRule {
                         }
 
                         // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
-
+                        let mut rep_group = Vec::new();
                         // mutate the cells as described by this pattern
                         for row_del in 0..p_rows {
                             for col_del in 0..p_cols {
                                 let rep = pattern.after[row_del][col_del];
                                 if rep != '*' {
-                                    partial_res[row + row_del][col + col_del] = rep;
+                                    rep_group.push((row + row_del, col + col_del, rep));
                                 }
                             }
                         }
+                        partial_res.push(rep_group);
                     }
                 }
                 partial_res
             })
-            .reduce(
-                || clear_grid.clone(),
-                |mut grid_a, grid_b| {
-                    for (index, cell) in grid_a.iter_mut().enumerate() {
-                        if grid_b[index / cols][index % cols] != '*' {
-                            *cell = grid_b[index / cols][index % cols];
-                        }
-                    }
-                    grid_a
-                },
-            );
+            .collect_into_vec(&mut replacements);
 
-        let mut res = grid.clone();
+        let mut mutated = grid::Grid::new(rows, cols);
+        mutated.fill(false);
 
-        for (index, cell) in res.iter_mut().enumerate() {
-            if replacements[index / cols][index % cols] != '*' {
-                *cell = replacements[index / cols][index % cols];
+        for rep_group in replacements.iter().flatten() {
+            if rep_group.iter().all(|(row, col, _)| !mutated[*row][*col]) {
+                for (row, col, rep) in rep_group.iter().copied() {
+                    grid[row][col] = rep;
+                    mutated[row][col] = true;
+                }
             }
         }
-
-        res
     }
 }
 
@@ -235,7 +224,7 @@ impl EnvironmentRule {
 }
 
 impl Rule for EnvironmentRule {
-    fn transform(&self, grid: &CellGrid) -> CellGrid {
+    fn transform(&self, grid: &mut CellGrid) {
         let mut buffer = grid::Grid::new(2 * self.range_vert + 1, 2 * self.range_hor + 1);
         let (h, w) = grid.size();
 
@@ -255,6 +244,6 @@ impl Rule for EnvironmentRule {
             }
         }
 
-        res
+        *grid = res;
     }
 }
