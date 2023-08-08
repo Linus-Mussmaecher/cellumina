@@ -74,6 +74,11 @@ impl PatternRule {
                 },
                 Pattern {
                     chance: 0.8,
+                    before: grid::grid![['X']['F']],
+                    after: grid::grid![['F']['F']],
+                },
+                Pattern {
+                    chance: 0.8,
                     before: grid::grid![['X', 'F']],
                     after: grid::grid![['F', 'F']],
                 },
@@ -100,12 +105,12 @@ impl PatternRule {
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['*', 'F']['X', '*']],
-                    after: grid::grid![['*', 'F']['F', '*']],
+                    after: grid::grid![['*', '*']['F', '*']],
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['F', '*']['*', 'X']],
-                    after: grid::grid![['F', '*']['*', 'F']],
+                    after: grid::grid![['*', '*']['*', 'F']],
                 },
                 Pattern {
                     chance: 0.03,
@@ -119,8 +124,18 @@ impl PatternRule {
                 },
                 Pattern {
                     chance: 1.,
+                    before: grid::grid![['A', ' ']['A', ' ']],
+                    after: grid::grid![[' ', '*']['A', 'A']],
+                },
+                Pattern {
+                    chance: 1.,
+                    before: grid::grid![[' ', 'A'][' ', 'A']],
+                    after: grid::grid![['*', ' ']['A', 'A']],
+                },
+                Pattern {
+                    chance: 1.,
                     before: grid::grid![['A']['F']],
-                    after: grid::grid![['F'][' ']],
+                    after: grid::grid![['F']['A']],
                 },
                 Pattern {
                     chance: 1.,
@@ -128,14 +143,9 @@ impl PatternRule {
                     after: grid::grid![[' ']['F']],
                 },
                 Pattern {
-                    chance: 0.02,
-                    before: grid::grid![['A']],
-                    after: grid::grid![[' ']],
-                },
-                Pattern {
-                    chance: 0.6,
-                    before: grid::grid![['A']['A']],
-                    after: grid::grid![[' ']['A']],
+                    chance: 1.,
+                    before: grid::grid![['X']['A']],
+                    after: grid::grid![['F']['*']],
                 },
                 Pattern {
                     chance: 0.1,
