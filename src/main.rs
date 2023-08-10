@@ -11,6 +11,7 @@ use winit::{
 
 mod cell_state;
 mod rule;
+mod shader_info;
 mod state;
 
 fn main() {
@@ -28,9 +29,8 @@ async fn run() {
             height: 500,
         }))
         // for now
-        .with_resizable(false)
+        .with_resizable(true)
         .with_title("Cellumina")
-        //.with_fullscreen(Some(winit::window::Fullscreen::Borderless(None)))
         .build(&event_loop)
         .expect("Could not init window.");
 
