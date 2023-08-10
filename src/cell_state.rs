@@ -40,6 +40,8 @@ impl CellState {
         })
     }
 
+    /// Returns the size of the underlying grid as a two element tuple.
+    /// First element are the number of rows and the second the columns.
     pub fn size(&self) -> (u32, u32) {
         (
             self.cell_grid.size().0 as u32,

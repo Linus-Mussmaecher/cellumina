@@ -82,13 +82,15 @@ fn window_events(
             *control_flow = ControlFlow::Exit;
         }
         // resize requested => resize
-        WindowEvent::Resized(physical_size) => {
-            state.resize(*physical_size);
+        WindowEvent::Resized(_physical_size) => {
+            state.resize(state.window().inner_size());
+            state.window().set_inner_size(state.size);
         }
         // different kind of resize requested => still resize
         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
             // new_inner_size is &&mut so we have to dereference it twice
             state.resize(**new_inner_size);
+            state.window().set_inner_size(state.size);
         }
         // handle all sorts of keyboard input
         // F11 => Switch fullscreen
