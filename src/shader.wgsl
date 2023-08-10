@@ -38,10 +38,15 @@ fn vs_main(
     out.clip_position = vec4<f32>(vertex.position.xyz, 1.0);
     out.tex_coords = vertex.tex_coords;
 
-    if shader_info.w > shader_info.h{
-        out.tex_coords.x *= f32(shader_info.w) / f32(shader_info.h);
+    let ratio_tex = f32(shader_info.cells_w) / f32(shader_info.cells_h);
+    let ratio_window = f32(shader_info.w) / f32(shader_info.h);
+
+    if ratio_tex > ratio_window{
+        out.tex_coords.y *= ratio_tex / ratio_window;
+        out.tex_coords.y -= (ratio_tex / ratio_window - 1.) / 2.;
     }else{
-        out.tex_coords.y *= f32(shader_info.h) / f32(shader_info.w);
+        out.tex_coords.x *= ratio_window / ratio_tex;
+        out.tex_coords.x -= (ratio_window / ratio_tex - 1.) / 2.;
     }
 
 
