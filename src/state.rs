@@ -2,6 +2,7 @@ use wgpu::util::DeviceExt;
 use winit::window::Window;
 
 use crate::cell_state::CellState;
+use crate::shader_info::ShaderInfoContainer;
 
 pub struct State {
     surface: wgpu::Surface,
@@ -12,7 +13,7 @@ pub struct State {
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
 
-    //pause: bool,
+    info: ShaderInfoContainer,
 
     // buffers
     vertex_buffer: wgpu::Buffer,
@@ -138,9 +139,10 @@ impl State {
         // +-------------------------------------------------------------+
 
         // Create the state of cells
-        let (cell_state, cells_bind_group_layout) = 
-        //CellState::new_empty(&device, 100, 50);
-        CellState::new_from_file(&device, "./src/sand_init.txt");
+        let (cell_state, cells_bind_group_layout) =
+            CellState::new_from_file(&device, "./src/sand_init.txt");
+
+        let (info, info_bind_group_layout) = ShaderInfoContainer::create(&device);
 
         // do a one-time-write
         //cell_state.write(&queue);
@@ -154,7 +156,7 @@ impl State {
             layout: Some(
                 &device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[&cells_bind_group_layout], //&[&info_bind_group_layout],
+                    bind_group_layouts: &[&cells_bind_group_layout, &info_bind_group_layout], //&[&info_bind_group_layout],
                     push_constant_ranges: &[],
                 }),
             ),
@@ -220,6 +222,7 @@ impl State {
             vertex_buffer,
             index_buffer,
             cell_state,
+            info,
         }
     }
 
@@ -233,6 +236,13 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            self.info.update(
+                new_size.width,
+                new_size.height,
+                self.cell_state.size().0,
+                self.cell_state.size().1,
+                &self.queue,
+            );
         }
     }
 
@@ -258,7 +268,7 @@ impl State {
     }
 
     pub(crate) fn update(&mut self) {
-        if self.cell_state.update(){
+        if self.cell_state.update() {
             self.cell_state.write(&self.queue);
         }
     }
@@ -305,6 +315,7 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             //render_pass.set_bind_group(0, &self.info_bind_group, &[]);
             render_pass.set_bind_group(0, &self.cell_state.cells_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.info.info_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             //render_pass.draw(0..3, 0..1);

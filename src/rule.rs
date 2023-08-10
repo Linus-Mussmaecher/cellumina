@@ -158,7 +158,7 @@ impl PatternRule {
                     after: grid::grid![[' ', 'F']],
                 },
                 Pattern {
-                    chance: 0.05,
+                    chance: 0.5,
                     before: grid::grid![['*']['S']],
                     after: grid::grid![['F']['S']],
                 },

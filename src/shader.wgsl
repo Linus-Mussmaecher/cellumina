@@ -1,19 +1,21 @@
 // Vertex shader
 
-// struct ShaderInfo {
-//     time: f32,
-//     w: u32,
-//     h: u32,
-// }
+struct ShaderInfo {
+    w: u32,
+    h: u32,
+    cells_w: u32,
+    cells_h: u32,
+}
 
-//@group(0) @binding(0)
-//var<uniform> shader_info: ShaderInfo;
 
 @group(0) @binding(0)
 var t_diffuse: texture_2d<f32>;
 
 @group(0) @binding(1)
 var s_diffuse: sampler;
+
+@group(1) @binding(0)
+var<uniform> shader_info: ShaderInfo;
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
@@ -34,10 +36,15 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
     out.clip_position = vec4<f32>(vertex.position.xyz, 1.0);
-    out.vert_pos = out.clip_position.xy;
     out.tex_coords = vertex.tex_coords;
-    //out.vert_pos.x *= f32(shader_info.w) / f32(shader_info.h);
-    //out.time = shader_info.time;
+
+    if shader_info.w > shader_info.h{
+        out.tex_coords.x *= f32(shader_info.w) / f32(shader_info.h);
+    }else{
+        out.tex_coords.y *= f32(shader_info.h) / f32(shader_info.w);
+    }
+
+
     return out;
 }
 

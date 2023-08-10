@@ -40,6 +40,13 @@ impl CellState {
         })
     }
 
+    pub fn size(&self) -> (u32, u32) {
+        (
+            self.cell_grid.size().0 as u32,
+            self.cell_grid.size().1 as u32,
+        )
+    }
+
     /// Creates a new cellular automaton from an initial state
     pub fn new_from_file(
         device: &wgpu::Device,
