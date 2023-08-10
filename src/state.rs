@@ -231,6 +231,12 @@ impl State {
     }
 
     pub(crate) fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        let mut new_size = new_size;
+        if new_size.width != self.size.width {
+            new_size.height = new_size.width * self.cell_state.size().0 / self.cell_state.size().1;
+        } else {
+            new_size.width = new_size.height * self.cell_state.size().1 / self.cell_state.size().0;
+        }
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
