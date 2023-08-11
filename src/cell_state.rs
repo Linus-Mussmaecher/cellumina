@@ -20,6 +20,9 @@ pub struct CellState {
     /// The last time the cell state was transformed.
     last_step: Instant,
 
+    avg_time: Duration,
+    avg_weight: u32,
+
     /// The rule
     rule: Box<dyn Rule>,
 }
@@ -181,6 +184,8 @@ impl CellState {
                 interval: Duration::from_secs_f32(0.1),
                 last_step: Instant::now(),
                 rule: Box::new(PatternRule::new_sand()),
+                avg_time: Duration::ZERO,
+                avg_weight: 0,
             },
             cells_bind_group_layout,
         )
@@ -224,7 +229,16 @@ impl CellState {
 
         self.rule.transform(&mut self.cell_grid);
 
-        println!("Time: {}s", self.last_step.elapsed().as_secs_f32());
+        let last_time = self.last_step.elapsed();
+
+        self.avg_time = (self.avg_time * self.avg_weight + last_time) / (self.avg_weight + 1);
+        self.avg_weight += 1;
+
+        println!(
+            "Time: {:2}s | {:2}s",
+            last_time.as_secs_f32(),
+            self.avg_time.as_secs_f32()
+        );
 
         true
     }
