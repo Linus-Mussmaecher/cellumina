@@ -1,3 +1,4 @@
+use rand::seq::SliceRandom;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::cell_state::CellGrid;
@@ -24,8 +25,20 @@ pub struct PatternRule {
 
 pub struct Pattern {
     chance: f32,
+    priority: f32,
     before: CellGrid,
     after: CellGrid,
+}
+
+impl Default for Pattern {
+    fn default() -> Self {
+        Self {
+            chance: 1.,
+            priority: 0.,
+            before: grid::grid![['*']],
+            after: grid::grid![['*']],
+        }
+    }
 }
 
 impl PatternRule {
@@ -33,134 +46,148 @@ impl PatternRule {
         Self {
             patterns: vec![
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['X'][' '][' ']],
                     after: grid::grid![[' '][' ']['X']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['X'][' ']],
                     after: grid::grid![[' ']['X']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['X', ' ']['X', ' ']],
                     after: grid::grid![[' ', ' ']['X', 'X']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![[' ', 'X'][' ', 'X']],
                     after: grid::grid![[' ', ' ']['X', 'X']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['X', ' ', ' ']['X', 'X', ' ']],
                     after: grid::grid![[' ', ' ', ' ']['X', 'X', 'X']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![[' ', ' ', 'X'][' ', 'X', 'X']],
                     after: grid::grid![[' ', ' ', ' ']['X', 'X', 'X']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.3,
                     before: grid::grid![[' ']['F']],
                     after: grid::grid![['F'][' ']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.1,
                     before: grid::grid![['F'][' ']],
                     after: grid::grid![[' ']['F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['X']['F']],
                     after: grid::grid![['F']['F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['X', 'F']],
                     after: grid::grid![['F', 'F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['F', 'X']],
                     after: grid::grid![['F', 'F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['F']['X']],
                     after: grid::grid![['F']['F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['X', '*']['*', 'F']],
                     after: grid::grid![['F', '*']['*', '*']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['*', 'X']['F', '*']],
                     after: grid::grid![['*', 'F']['*', '*']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['*', 'F']['X', '*']],
                     after: grid::grid![['*', '*']['F', '*']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.8,
                     before: grid::grid![['F', '*']['*', 'X']],
                     after: grid::grid![['*', '*']['*', 'F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.03,
                     before: grid::grid![['F']],
                     after: grid::grid![['A']],
+                    priority: 1.,
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['A'][' ']],
                     after: grid::grid![[' ']['A']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['A', ' ']['A', ' ']],
                     after: grid::grid![[' ', '*']['A', 'A']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![[' ', 'A'][' ', 'A']],
                     after: grid::grid![['*', ' ']['A', 'A']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['A']['F']],
                     after: grid::grid![['F']['A']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['A']['X']],
                     after: grid::grid![[' ']['F']],
+                    ..Default::default()
                 },
                 Pattern {
-                    chance: 1.,
                     before: grid::grid![['X']['A']],
                     after: grid::grid![['F']['*']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.1,
                     before: grid::grid![[' ', 'F']],
                     after: grid::grid![['F', ' ']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.1,
                     before: grid::grid![['F', ' ']],
                     after: grid::grid![[' ', 'F']],
+                    ..Default::default()
                 },
                 Pattern {
                     chance: 0.5,
                     before: grid::grid![['*']['S']],
                     after: grid::grid![['F']['S']],
+                    ..Default::default()
                 },
             ],
         }
@@ -208,7 +235,12 @@ impl Rule for PatternRule {
                             for col_del in 0..p_cols {
                                 let rep = pattern.after[row_del][col_del];
                                 if rep != '*' {
-                                    rep_group.push((row + row_del, col + col_del, rep));
+                                    rep_group.push((
+                                        pattern.priority,
+                                        row + row_del,
+                                        col + col_del,
+                                        rep,
+                                    ));
                                 }
                             }
                         }
@@ -219,12 +251,27 @@ impl Rule for PatternRule {
             })
             .collect_into_vec(&mut replacements);
 
+        replacements.shuffle(&mut rand::thread_rng());
+        replacements.sort_by(|rule1, rule2| {
+            if rule1.is_empty() || rule2.is_empty() {
+                return std::cmp::Ordering::Equal;
+            }
+            let rep1 = *rule1.first().unwrap().first().unwrap();
+            let rep2 = *rule2.first().unwrap().first().unwrap();
+            rep2.0
+                .partial_cmp(&rep1.0)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
         let mut mutated = grid::Grid::new(rows, cols);
         mutated.fill(false);
 
         for rep_group in replacements.iter().flatten() {
-            if rep_group.iter().all(|(row, col, _)| !mutated[*row][*col]) {
-                for (row, col, rep) in rep_group.iter().copied() {
+            if rep_group
+                .iter()
+                .all(|(_, row, col, _)| !mutated[*row][*col])
+            {
+                for (_, row, col, rep) in rep_group.iter().copied() {
                     grid[row][col] = rep;
                     mutated[row][col] = true;
                 }
