@@ -23,8 +23,10 @@ pub struct State {
 //                             -> queue
 //                 -> surface
 
+const VERTICES_COUNT: usize = 4;
+
 /// Vertices forming the corners of a rectangle
-const VERTICES: [Vertex; 4] = [
+const VERTICES: [Vertex; VERTICES_COUNT] = [
     Vertex {
         position: [-1., -1., 0.0],
         tex_coords: [0., 1.],

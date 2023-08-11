@@ -11,7 +11,6 @@ use winit::{
 
 mod cell_state;
 mod rule;
-mod shader_info;
 mod state;
 
 fn main() {
