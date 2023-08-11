@@ -235,9 +235,10 @@ impl CellState {
         self.avg_weight += 1;
 
         println!(
-            "Time: {:2}s | {:2}s",
+            "Time: {:.4}s | {:.4}s ({:.4} fps)",
             last_time.as_secs_f32(),
-            self.avg_time.as_secs_f32()
+            self.avg_time.as_secs_f32(),
+            1. / self.avg_time.as_secs_f32(),
         );
 
         true

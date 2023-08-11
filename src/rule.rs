@@ -209,15 +209,16 @@ impl Rule for PatternRule {
             .filter_map(|pattern| {
                 let mut partial_res = Vec::new();
                 for row in 0..rows {
-                    'pattern_loop: for col in 0..cols {
+                    'inner_loop: for col in 0..cols {
                         let (p_rows, p_cols) = pattern.after.size();
 
                         // check if pattern would move out of bounds
                         if row + p_rows > rows
                             || col + p_cols > cols
+                            // or immediately randomly stop to adhere to pattern chance
                             || rand::random::<f32>() > pattern.chance
                         {
-                            continue 'pattern_loop;
+                            continue 'inner_loop;
                         }
 
                         // check if pattern is applicable
@@ -227,14 +228,14 @@ impl Rule for PatternRule {
                                     && grid[row + row_del][col + col_del]
                                         != pattern.before[row_del][col_del]
                                 {
-                                    continue 'pattern_loop;
+                                    continue 'inner_loop;
                                 }
                             }
                         }
 
-                        // if we arrive here, the pattern fits (first check) and the cell are still free to mutate this step (second & third check)
+                        // if we arrive here, the pattern fits
                         let mut rep_group = Vec::new();
-                        // mutate the cells as described by this pattern
+                        // push replacements as dictated by the pattern
                         for row_del in 0..p_rows {
                             for col_del in 0..p_cols {
                                 let rep = pattern.after[row_del][col_del];
@@ -251,6 +252,7 @@ impl Rule for PatternRule {
                         partial_res.push(rep_group);
                     }
                 }
+                // only return partial result if it contains any elements
                 if partial_res.is_empty() {
                     None
                 } else {
@@ -260,8 +262,9 @@ impl Rule for PatternRule {
             .flatten()
             .collect();
 
-        // remove all
+        // shuffle the replacements
         replacements.shuffle(&mut rand::thread_rng());
+        // then re-sort them by priority
         replacements.sort_by(|rule1, rule2| {
             if let Some(rep1) = rule1.first() {
                 if let Some(rep2) = rule2.first() {
