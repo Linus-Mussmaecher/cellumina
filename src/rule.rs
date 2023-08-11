@@ -1,7 +1,6 @@
-use rand::seq::SliceRandom;
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
-
 use crate::cell_state::CellGrid;
+use rand::seq::SliceRandom;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 pub trait Rule {
     fn transform(&self, grid: &mut CellGrid);
@@ -19,10 +18,12 @@ impl Rule for MultiRule {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct PatternRule {
     patterns: Vec<Pattern>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Pattern {
     chance: f32,
     priority: f32,
@@ -48,11 +49,13 @@ impl PatternRule {
                 Pattern {
                     before: grid::grid![['X'][' '][' ']],
                     after: grid::grid![[' '][' ']['X']],
-                    ..Default::default()
+                    priority: 1.0,
+                    chance: 0.9,
                 },
                 Pattern {
                     before: grid::grid![['X'][' ']],
                     after: grid::grid![[' ']['X']],
+                    priority: 0.5,
                     ..Default::default()
                 },
                 Pattern {
@@ -194,15 +197,16 @@ impl PatternRule {
     }
 }
 
+type ReplacementCollection = Vec<Vec<(f32, usize, usize, char)>>;
+
 impl Rule for PatternRule {
     fn transform(&self, grid: &mut CellGrid) {
         let (rows, cols) = grid.size();
 
-        let mut replacements = Vec::new();
-
-        self.patterns
+        let mut replacements: ReplacementCollection = self
+            .patterns
             .par_iter()
-            .map(|pattern| {
+            .filter_map(|pattern| {
                 let mut partial_res = Vec::new();
                 for row in 0..rows {
                     'pattern_loop: for col in 0..cols {
@@ -247,26 +251,35 @@ impl Rule for PatternRule {
                         partial_res.push(rep_group);
                     }
                 }
-                partial_res
+                if partial_res.is_empty() {
+                    None
+                } else {
+                    Some(partial_res)
+                }
             })
-            .collect_into_vec(&mut replacements);
+            .flatten()
+            .collect();
 
+        // remove all
         replacements.shuffle(&mut rand::thread_rng());
         replacements.sort_by(|rule1, rule2| {
-            if rule1.is_empty() || rule2.is_empty() {
-                return std::cmp::Ordering::Equal;
+            if let Some(rep1) = rule1.first() {
+                if let Some(rep2) = rule2.first() {
+                    rep2.0
+                        .partial_cmp(&rep1.0)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            } else {
+                std::cmp::Ordering::Equal
             }
-            let rep1 = *rule1.first().unwrap().first().unwrap();
-            let rep2 = *rule2.first().unwrap().first().unwrap();
-            rep2.0
-                .partial_cmp(&rep1.0)
-                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         let mut mutated = grid::Grid::new(rows, cols);
         mutated.fill(false);
 
-        for rep_group in replacements.iter().flatten() {
+        for rep_group in replacements.iter() {
             if rep_group
                 .iter()
                 .all(|(_, row, col, _)| !mutated[*row][*col])
