@@ -1,21 +1,21 @@
 // Vertex shader
 
-struct ShaderInfo {
-    w: u32,
-    h: u32,
-    cells_w: u32,
-    cells_h: u32,
-}
+// struct ShaderInfo {
+//     w: u32,
+//     h: u32,
+//     cells_w: u32,
+//     cells_h: u32,
+// }
 
+
+// @group(1) @binding(0)
+// var<uniform> shader_info: ShaderInfo;
 
 @group(0) @binding(0)
 var t_diffuse: texture_2d<f32>;
 
 @group(0) @binding(1)
 var s_diffuse: sampler;
-
-@group(1) @binding(0)
-var<uniform> shader_info: ShaderInfo;
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
