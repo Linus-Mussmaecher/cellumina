@@ -2,7 +2,6 @@ use wgpu::util::DeviceExt;
 use winit::window::Window;
 
 use crate::cell_state::CellState;
-use crate::shader_info::ShaderInfoContainer;
 
 pub struct State {
     surface: wgpu::Surface,
@@ -12,8 +11,6 @@ pub struct State {
     pub size: winit::dpi::PhysicalSize<u32>,
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
-
-    info: ShaderInfoContainer,
 
     // buffers
     vertex_buffer: wgpu::Buffer,
@@ -27,7 +24,7 @@ pub struct State {
 //                 -> surface
 
 /// Vertices forming the corners of a rectangle
-const VERTICES: &[Vertex] = &[
+const VERTICES: [Vertex; 4] = [
     Vertex {
         position: [-1., -1., 0.0],
         tex_coords: [0., 1.],
@@ -142,8 +139,6 @@ impl State {
         let (cell_state, cells_bind_group_layout) =
             CellState::new_from_file(&device, "./src/sand_init.txt");
 
-        let (info, info_bind_group_layout) = ShaderInfoContainer::create(&device);
-
         // do a one-time-write
         //cell_state.write(&queue);
 
@@ -156,7 +151,7 @@ impl State {
             layout: Some(
                 &device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[&cells_bind_group_layout, &info_bind_group_layout], //&[&info_bind_group_layout],
+                    bind_group_layouts: &[&cells_bind_group_layout], //&[&info_bind_group_layout],
                     push_constant_ranges: &[],
                 }),
             ),
@@ -200,9 +195,9 @@ impl State {
             // name
             label: Some("Vertex Buffer"),
             // actual contents
-            contents: bytemuck::cast_slice(VERTICES),
+            contents: bytemuck::cast_slice(&VERTICES),
             // vertex buffer or index buffer?
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
 
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -222,7 +217,6 @@ impl State {
             vertex_buffer,
             index_buffer,
             cell_state,
-            info,
         }
     }
 
@@ -231,24 +225,28 @@ impl State {
     }
 
     pub(crate) fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        let mut new_size = new_size;
-        if new_size.width != self.size.width {
-            new_size.height = new_size.width * self.cell_state.size().0 / self.cell_state.size().1;
-        } else {
-            new_size.width = new_size.height * self.cell_state.size().1 / self.cell_state.size().0;
-        }
+        let new_size = new_size;
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.info.update(
-                new_size.width,
-                new_size.height,
-                self.cell_state.size().0,
-                self.cell_state.size().1,
-                &self.queue,
-            );
+            let mut vertices = VERTICES;
+            let cell_ratio = self.cell_state.size().1 as f32 / self.cell_state.size().0 as f32;
+            let win_ratio = new_size.width as f32 / new_size.height as f32;
+
+            if cell_ratio > win_ratio {
+                for v in vertices.iter_mut() {
+                    v.position[1] *= win_ratio / cell_ratio;
+                }
+            } else {
+                for v in vertices.iter_mut() {
+                    v.position[0] *= cell_ratio / win_ratio;
+                }
+            }
+
+            self.queue
+                .write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
         }
     }
 
@@ -321,7 +319,6 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             //render_pass.set_bind_group(0, &self.info_bind_group, &[]);
             render_pass.set_bind_group(0, &self.cell_state.cells_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.info.info_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             //render_pass.draw(0..3, 0..1);
