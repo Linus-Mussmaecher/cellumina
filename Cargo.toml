@@ -23,3 +23,9 @@ grid = "0.10"
 rand = "0.8"
 
 serde = "1.0"
+
+
+[[test]]
+name = "sand"
+path = "tests/sand/main.rs"
+harness = false
