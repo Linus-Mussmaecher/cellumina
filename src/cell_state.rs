@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::rule::*;
+use crate::rules;
 
 pub type CellGrid = grid::Grid<char>;
 
@@ -24,7 +24,7 @@ pub struct CellState {
     avg_weight: u32,
 
     /// The rule
-    rule: Box<dyn Rule>,
+    rule: Box<dyn rules::Rule>,
 }
 
 impl CellState {
@@ -183,7 +183,7 @@ impl CellState {
                 cells_bind_group,
                 interval: Duration::from_secs_f32(0.1),
                 last_step: Instant::now(),
-                rule: Box::new(PatternRule::new_sand()),
+                rule: Box::new(rules::pattern_rule::PatternRule::new_sand()),
                 avg_time: Duration::ZERO,
                 avg_weight: 0,
             },
