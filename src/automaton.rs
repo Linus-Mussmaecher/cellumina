@@ -1,8 +1,6 @@
 use std::{collections::HashMap, time};
 
-use crate::{error::CelluminaError, rule};
-
-pub type CellGrid = grid::Grid<char>;
+use crate::{error::CelluminaError, rule, CellGrid};
 
 /// A struct that represents the current state and rule set of a cellular automaton.
 pub struct Automaton {
