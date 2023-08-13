@@ -12,7 +12,7 @@ use super::vertex;
 use crate::automaton;
 
 /// A struct that holds an automaton and a lot of WebGL-State and can run and display that automaton.
-struct AutomatonDisplayer {
+pub(super) struct AutomatonDisplayer {
     /// The WebGL Surface.
     surface: wgpu::Surface,
     /// The WebGL Device.

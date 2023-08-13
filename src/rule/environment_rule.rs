@@ -3,7 +3,9 @@ use crate::CellGrid;
 /// An environment rule uses the neighborhood (up to a certain range as specified) of a cell and applies a function to it.
 /// The result of this function is the next value of that cell.
 /// Applying this to each cell yields the entire transformation.
-/// Note that each application of the ```cell_transform`` function will read from the entire untransformed array.
+///
+/// Note that each application of the ```cell_transform``` function will read from the entire untransformed array.
+/// Also, the environment will wrap around the grid edges.
 pub struct EnvironmentRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.

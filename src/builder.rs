@@ -2,26 +2,26 @@ use crate::{automaton, CellGrid};
 use std::collections::HashMap;
 
 use crate::rule;
-/// Builder struct for [automaton::Automaton].
+/// Builder struct for [Automaton](automaton::Automaton).
 ///
 /// Uses the builder pattern.
-/// Create a builder using [`Self::new()`] and supply the following parameters:
+/// Create a builder using [Self::new()] and supply the following parameters:
 ///  -  An initial state from a text file, image file or other source.
 ///     If you supply no initial state, an empty grid of dimensions 10x10 will be used.
-///  -  One or multiple [rule::Rule]s.
+///  -  One or multiple [Rules](rule::Rule).
 ///     Supplying no rules will produce a static automaton.
-///     Supplying multiple rules will combine them into a single [rule::MultiRule], i.e. they will all be applied each step in the order you passed them in.
+///     Supplying multiple rules will combine them into a single [MultiRule](rule::MultiRule), i.e. they will all be applied each step in the order you passed them in.
 ///
-///     Additionaly, you can add [rule::Pattern]s that will be added to an internal [rule::PatternRule].
-///     In the building process, this [pattern::PatternRule] will be added to the collection of rules supplied in other ways and be treated equally.
-///     Therefore, supplying only patterns will create an automaton with only a single [rule::PatternRule].
+///     Additionaly, you can add [rule::Pattern]s that will be added to an internal [Pattern Rule](rule::PatternRule).
+///     In the building process, this [Pattern Rule](rule::PatternRule) will be added to the collection of rules supplied in other ways and be treated equally.
+///     Therefore, supplying only patterns will create an automaton with only a single [Pattern Rule](rule::PatternRule).
 ///
-///     Supplying Patters both by adding separate [rule::PatternRule]s and adding [rule::Pattern]s manually is not recommended, as this will create two PatternRules that need to be applied seperately and cannot be convoluted and parallelized.
+///     Supplying Patters both by adding separate [Pattern Rule](rule::PatternRule)s and adding [rule::Pattern]s manually is not recommended, as this will create two PatternRules that need to be applied seperately and cannot be convoluted and parallelized.
 /// -   One or multiple color mappings. These allow the state to be displayed or be converted into an image.
 ///     The colors are also used when reading in your initial state from an image.
 /// -   Optionally, a time step to describe how often the automaton should transform itself using its rules.
 ///
-/// Finally, the [`Self::build()`] function will consume this builder to create an [automaton::Automaton].
+/// Finally, the [Self::build()] function will consume this builder to create a [cellular automaton](automaton::Automaton).
 ///
 /// If the created automaton is running on a fixed time step, it will not start counting until [automaton::Automaton::next_step] is called for the first time.
 pub struct AutomatonBuilder {
@@ -66,7 +66,7 @@ impl AutomatonBuilder {
     /// Set a fixed time step for the automaton.
     ///
     /// When choosing this option, the automaton will update itself every interval.
-    /// If the duration between two calls of [automaton::Automaton::next_step] is longer than intervall, the automaton will perform multiple steps to catch up.
+    /// If the duration between two calls of [next_step()](automaton::Automaton::next_step) is longer than intervall, the automaton will perform multiple steps to catch up.
     ///
     /// Use this if calculating the next step is only taking up a small amount of computation time compared to other tasks, and the above scenario may happen regularly.
     pub fn with_time_step(mut self, interval: std::time::Duration) -> Self {
@@ -122,13 +122,13 @@ impl AutomatonBuilder {
         self
     }
 
-    /// Adds a [rule::Pattern] to this automaton that will be used for replacement each step.
+    /// Adds a [Pattern](rule::Pattern) to this automaton that will be used for replacement each step.
     pub fn with_pattern(mut self, pattern: rule::Pattern) -> Self {
         self.pattern_rule.patterns.push(pattern);
         self
     }
 
-    /// Adds multiple [rule::Pattern]s to this automaton that will be used for replacement each step.
+    /// Adds multiple [Patterns](rule::Pattern) to this automaton that will be used for replacement each step.
     pub fn with_patterns(mut self, patterns: &[rule::Pattern]) -> Self {
         self.pattern_rule.patterns.extend(patterns.iter().cloned());
         self
@@ -136,10 +136,10 @@ impl AutomatonBuilder {
 
     /// Adds a rule to this automaton.
     ///
-    /// Adding multiple rules will combine them into a single [rule::MultiRule] on construction.
+    /// Adding multiple rules will combine them into a single [MultiRule](rule::MultiRule) on construction.
     ///
-    /// It is not suggested to use this function to add a [rule::PatternRule] and instead use [with_pattern] or [with_patterns].
-    /// Only use this to add a [rule::PatternRule] when you have already constructed it elsewhere or reuse the same [rule::PatternRule] for multiple automata.
+    /// It is not suggested to use this function to add a [Pattern Rule](rule::PatternRule) and instead use [Self::with_pattern] or [Self::with_patterns].
+    /// Only use this to add a [Pattern Rule](rule::PatternRule) when you have already constructed it elsewhere or reuse the same [Pattern Rule](rule::PatternRule) for multiple automata.
     pub fn with_rule(mut self, rule: impl rule::Rule + 'static) -> Self {
         self.rules.push(Box::new(rule));
         self
@@ -165,7 +165,7 @@ impl AutomatonBuilder {
 
     // TODO: colors from file
 
-    /// Completes the build process and produces an [automaton::Automaton] as specified.
+    /// Completes the build process and produces an [cellular automaton](automaton::Automaton) as specified.
     pub fn build(mut self) -> automaton::Automaton {
         automaton::Automaton {
             state: match std::mem::replace(&mut self.source, InitSource::None) {
