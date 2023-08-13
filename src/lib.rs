@@ -3,4 +3,4 @@ pub mod builder;
 pub mod cell_state;
 pub mod error;
 pub mod graphic;
-pub mod rules;
+pub mod rule;

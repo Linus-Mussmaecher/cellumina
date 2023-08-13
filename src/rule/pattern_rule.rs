@@ -5,7 +5,7 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 #[derive(Debug, Clone)]
 pub struct PatternRule {
-    patterns: Vec<Pattern>,
+    pub(crate) patterns: Vec<Pattern>,
 }
 
 #[derive(Debug, Clone)]
@@ -28,6 +28,13 @@ impl Default for Pattern {
 }
 
 impl PatternRule {
+    /// Create a new (empty) pattern rule.
+    pub fn new_empty() -> Self {
+        Self {
+            patterns: Vec::new(),
+        }
+    }
+
     pub fn new_sand() -> Self {
         Self {
             patterns: vec![
