@@ -21,6 +21,31 @@ pub struct PatternRule {
 ///
 /// If multiple patterns are applicable within a time step, the one with higher priority will always be applied first.
 /// Only if no cell concerning the second pattern has been mutated, the second pattern will apply also.
+/// ```
+/// use cellumina::rule::Rule;
+/// let rule = cellumina::rule::PatternRule::from_patterns(
+///     &[
+///         cellumina::rule::Pattern{
+///             chance: 1.0,
+///             priority: 1.0,
+///             before: grid::grid![['X'][' ']],
+///             after: grid::grid![[' ']['X']],
+///         },
+///         cellumina::rule::Pattern{
+///             chance: 1.0,
+///             priority: 0.5,
+///             before: grid::grid![[' ', 'X']['X', ' ']],
+///             after: grid::grid![['X', 'X'][' ', ' ']],
+///         },
+///     ]
+/// );
+///
+/// let mut grid = grid::grid![[' ', 'X']['X', ' '][' ', ' ']];
+/// rule.transform(&mut grid);
+/// assert_eq!(grid, grid::grid![[' ', ' '][' ', 'X']['X', ' ']]);
+/// rule.transform(&mut grid);
+/// assert_eq!(grid, grid::grid![[' ', ' '][' ', ' ']['X', 'X']]);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Pattern {
     /// The chance for the pattern to apply on a match.
@@ -49,6 +74,13 @@ impl PatternRule {
     pub fn new_empty() -> Self {
         Self {
             patterns: Vec::new(),
+        }
+    }
+
+    /// Create a new pattern rule from a set of patterns.
+    pub fn from_patterns(rules: &[Pattern]) -> Self {
+        Self {
+            patterns: rules.to_vec(),
         }
     }
 }

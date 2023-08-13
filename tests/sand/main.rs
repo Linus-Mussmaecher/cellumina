@@ -160,7 +160,7 @@ fn main() {
             ('A', [235, 125, 125, 255]),
             ('S', [185, 23, 45, 255]),
         ]))
-        .with_min_time_step(std::time::Duration::from_secs_f32(0.1))
+        .with_time_step(std::time::Duration::from_secs_f32(0.1))
         .build()
         .run_live();
 }
