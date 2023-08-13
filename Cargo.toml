@@ -27,5 +27,5 @@ serde = "1.0"
 
 [[test]]
 name = "sand"
-path = "tests/sand/main.rs"
+path = "tests/game_of_life/main.rs"
 harness = false

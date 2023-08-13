@@ -3,12 +3,12 @@ use crate::cell_state;
 pub struct EnvironmentRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
-    range_vert: usize,
+    pub range_vert: usize,
     /// The horizontal range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
-    range_hor: usize,
+    pub range_hor: usize,
     /// The environemnt rules. Need to be complete.
-    cell_transform: fn(&cell_state::CellGrid) -> char,
+    pub cell_transform: fn(&cell_state::CellGrid) -> char,
 }
 
 impl EnvironmentRule {
