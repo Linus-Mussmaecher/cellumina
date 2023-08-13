@@ -41,7 +41,7 @@ This is useful when just playing around with cellular automata.
 
 ## Usage
 
-To use Cellumina, simply import it via cargo:
+To use Cellumina in your own project, simply add this line to your ```Cargo.toml``` file:
 ```toml
   [dependencies]
   cellumina = "0.1"
