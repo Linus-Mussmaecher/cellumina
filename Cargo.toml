@@ -1,6 +1,6 @@
 [package]
 name = "cellumina"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Linus Mußmächer linus.mussmaecher@gmail.com"]
 license = "MIT"
