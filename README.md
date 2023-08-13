@@ -1,23 +1,20 @@
 # Cellumina
 
-A WebGL-based program to run cellular automata via the command line. Planned features:
+[![Docs Status](https://docs.rs/mooeye/badge.svg)](https://docs.rs/cellumina)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Linus-Mussmaecher/cellumina/blob/main/LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/mooeye.svg)](https://crates.io/crates/cellumina)
+[![Crates.io](https://img.shields.io/crates/d/mooeye.svg)](https://crates.io/crates/cellumina)
+
+A library to easily crate and run [Cellular Automata](https://en.wikipedia.org/wiki/Cellular_automaton).
 
 ### Basic features
 
-Cellumina is a Command Line Programm to run 1- or 2-dimensional cellular automata.
-Cellumina loads an initial state from the target folder, displays it in a rendering window and repeatedly modifies it by applying a fully customizable ruleset to the cells.
-
-The colouring of the display, the set of rules loaded and the default timestep can be freely configured via a config file.
-
-### Runtime Interaction
-* Manipulate cells at runtime
-* Pause, speed up or slow down interaction
-* Save the current state.
+Cellumina provides an ```Automaton``` struct that represents a 2-dimensional grid of characters.
+This grid can be initialized from a vector, a file or an image.
+Additionally, the user can configure the ```Rule``` the automaton uses to transform itself into the next step.
+The transformation to the next state can be initiated manually or on a fixed time step, for example when using Cellumina as part of a larger graphical application.
 
 ### Rules
-
-Fully customize the rules of the cellular automaton running in cellumina by selectively loading rules from module files.
-Possible rule types include:
 
 * Pattern Replacement Rules
   * Specifiy a pattern that is searched each stepped and replaced with a second pattern.
@@ -25,10 +22,20 @@ Possible rule types include:
 * Environment Rules
   * The next state of a cell is fully determined by its environment in the step before.
   * Example: [Rule 90](https://en.wikipedia.org/wiki/Rule_90).
-* Counting Rules
-  * A variation of environment rules that only relies on the count of surrounding elements.
   * Example: [Game Of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
 
+### Live View
+
+Cellumina can be run in 'Live View' mode.
+It will then take ownership of a configured automaton, run it by itself and display the cell state in a separate window.
+This is useful when just playing around with cellular automata.
+
 ### Performance
-* Multithreading with rayon OR
-* Compute shaders
+
+Since pattern replacement can be a rather costly operation, cellumina runs these in parallel using the [rayon](https://github.com/rayon-rs/rayon) crate.
+
+### Planned Features
+
+ * Interaction in Live View.
+ * Loading rules from files and entire configurations from files.
+ * Extensive examples.
