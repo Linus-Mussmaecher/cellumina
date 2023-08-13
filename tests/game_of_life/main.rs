@@ -4,6 +4,8 @@ fn main() {
     cellumina::AutomatonBuilder::new()
         // Use an image to supply the initial configuration.
         .from_image_file("./tests/game_of_life/gol_init3.png")
+        // Alternative source: Lode the gosper glider gun from a .txt file. Note that the gun will destroy itself as the canvas is not infinite but wraps around, so the gun shoots itself.
+        //.from_text_file("./tests/game_of_life/gosper_glider.txt")
         // Describe the rule of Conway's Game Of Life.
         .with_rule(cellumina::rule::EnvironmentRule {
             // Each cell only cares about neighbors 1 field away.
@@ -34,7 +36,7 @@ fn main() {
             },
         })
         // Set a minimum time step.
-        .with_min_time_step(std::time::Duration::from_secs_f32(0.2))
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.1))
         // Set a display color for the live cells. This color needs to match the color of the live cells in our source image.
         .with_color('X', [106, 190, 48, 255])
         // Finish the build process.
