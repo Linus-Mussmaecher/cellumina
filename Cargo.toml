@@ -2,6 +2,13 @@
 name = "cellumina"
 version = "0.1.0"
 edition = "2021"
+authors = ["Linus Mußmächer linus.mussmaecher@gmail.com"]
+license = "MIT"
+description = "A library to configure and run cellular automata."
+readme = "README.md"
+repository = "https://github.com/Linus-Mussmaecher/cellumina"
+homepage = "https://github.com/Linus-Mussmaecher/cellumina"
+keywords = ["cellular automaton", "WebGL"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
