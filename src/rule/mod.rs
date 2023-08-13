@@ -1,5 +1,9 @@
-pub mod environment_rule;
-pub mod pattern_rule;
+mod environment_rule;
+mod pattern_rule;
+
+pub use environment_rule::EnvironmentRule;
+pub use pattern_rule::Pattern;
+pub use pattern_rule::PatternRule;
 
 use crate::cell_state;
 
@@ -7,8 +11,8 @@ pub trait Rule {
     fn transform(&self, grid: &mut cell_state::CellGrid);
 }
 
-pub struct MultiRule {
-    rules: Vec<Box<dyn Rule>>,
+pub(crate) struct MultiRule {
+    pub(crate) rules: Vec<Box<dyn Rule>>,
 }
 
 impl Rule for MultiRule {

@@ -1,24 +1,26 @@
 use std::{collections::HashMap, time};
 
-use crate::{error::CelluminaError, rules};
+use crate::{error::CelluminaError, rule};
 
 pub type CellGrid = grid::Grid<char>;
 
 /// A struct that represents the current state and rule set of a cellular automaton.
 pub struct Automaton {
     /// The current state of the automaton.
-    state: CellGrid,
+    pub(super) state: CellGrid,
     /// The rule set of the automaton.
-    rules: Box<dyn rules::Rule>,
+    pub(super) rules: Box<dyn rule::Rule>,
     /// How often and on what conditions this automaton applies its rule set to its state to get to the next step.
-    step_mode: StepMode,
+    pub(super) step_mode: StepMode,
     /// The colors this automaton uses to convert itself to an image.
-    colors: HashMap<char, [u8; 4]>,
+    pub(super) colors: HashMap<char, [u8; 4]>,
 }
 
-/// A
-pub enum StepMode {
+/// Describes how often an [Automaton] executes its time step.
+pub(super) enum StepMode {
+    /// Time steps are performed on every call of the [Automaton::next_step] function.
     Immediate,
+    /// Time steps are performed every interval, but at most once per call of the [Automaton::next_step] function.
     Timed {
         interval: time::Duration,
         last_step: time::Instant,
