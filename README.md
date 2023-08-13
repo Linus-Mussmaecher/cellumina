@@ -2,8 +2,8 @@
 
 [![Docs Status](https://docs.rs/mooeye/badge.svg)](https://docs.rs/cellumina)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Linus-Mussmaecher/cellumina/blob/main/LICENSE)
-[![Crates.io](https://img.shields.io/crates/v/mooeye.svg)](https://crates.io/crates/cellumina)
-[![Crates.io](https://img.shields.io/crates/d/mooeye.svg)](https://crates.io/crates/cellumina)
+[![Crates.io](https://img.shields.io/crates/v/cellumina.svg)](https://crates.io/crates/cellumina)
+[![Crates.io](https://img.shields.io/crates/d/cellumina.svg)](https://crates.io/crates/cellumina)
 
 A library to easily crate and run [Cellular Automata](https://en.wikipedia.org/wiki/Cellular_automaton).
 
