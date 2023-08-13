@@ -55,6 +55,11 @@ impl AutomatonBuilder {
         self
     }
 
+    pub fn with_patterns(mut self, patterns: &[rule::Pattern]) -> Self {
+        self.pattern_rule.patterns.extend(patterns.iter().cloned());
+        self
+    }
+
     pub fn with_rule(mut self, rule: impl rule::Rule + 'static) -> Self {
         self.rules.push(Box::new(rule));
         self

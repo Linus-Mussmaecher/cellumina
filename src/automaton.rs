@@ -94,4 +94,8 @@ impl Automaton {
             }
         }
     }
+
+    pub fn run_live(self) {
+        pollster::block_on(crate::graphic::run_live(self));
+    }
 }
