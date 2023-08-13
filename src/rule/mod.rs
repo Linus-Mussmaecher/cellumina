@@ -1,14 +1,13 @@
 mod environment_rule;
 mod pattern_rule;
 
+use super::CellGrid;
 pub use environment_rule::EnvironmentRule;
 pub use pattern_rule::Pattern;
 pub use pattern_rule::PatternRule;
 
-use crate::cell_state;
-
 pub trait Rule {
-    fn transform(&self, grid: &mut cell_state::CellGrid);
+    fn transform(&self, grid: &mut CellGrid);
 }
 
 pub(crate) struct MultiRule {
@@ -16,7 +15,7 @@ pub(crate) struct MultiRule {
 }
 
 impl Rule for MultiRule {
-    fn transform(&self, grid: &mut cell_state::CellGrid) {
+    fn transform(&self, grid: &mut CellGrid) {
         for rule in &self.rules {
             rule.transform(grid);
         }
