@@ -27,12 +27,12 @@ fn main() {
             // Note the use of wildcards '*' in the 'after'-grids - these indicate to the automaton that the pattern does not mutate these cells.
             Pattern {
                 before: grid::grid![['X', ' ']['X', ' ']],
-                after: grid::grid![[' ', '*']['X', 'X']],
+                after: grid::grid![[' ', '*']['*', 'X']],
                 ..Default::default()
             },
             Pattern {
                 before: grid::grid![[' ', 'X'][' ', 'X']],
-                after: grid::grid![['*', ' ']['X', 'X']],
+                after: grid::grid![['*', ' ']['X', '*']],
                 ..Default::default()
             },
             // Even 45 degree slopes of sand collapse (once again to both sides).
@@ -142,12 +142,12 @@ fn main() {
             // Just like sand, Ash collapses when stacked.
             Pattern {
                 before: grid::grid![['A', ' ']['A', ' ']],
-                after: grid::grid![[' ', '*']['A', 'A']],
+                after: grid::grid![[' ', '*']['*', 'A']],
                 ..Default::default()
             },
             Pattern {
                 before: grid::grid![[' ', 'A'][' ', 'A']],
-                after: grid::grid![['*', ' ']['A', 'A']],
+                after: grid::grid![['*', ' ']['A', '*']],
                 ..Default::default()
             },
             // Fire does not ignite Ash, but passes cleanly through it and upwards
@@ -156,7 +156,7 @@ fn main() {
                 after: grid::grid![['F']['A']],
                 ..Default::default()
             },
-            // Ash, just like, fire, can ignite sand, but just from the 4 main directions.
+            // Ash, just like fire, can ignite sand, but only from the 4 main directions.
             Pattern {
                 before: grid::grid![['A']['X']],
                 after: grid::grid![['*']['F']],
@@ -185,14 +185,23 @@ fn main() {
                 ..Default::default()
             },
         ])
+        // Now set the colors the automaton uses for displaying these elements.
         .with_colors(HashMap::from([
-            (' ', [0; 4]),
-            ('X', [86, 181, 78, 255]), //[232, 212, 100, 255],
-            ('F', [235, 64, 52, 255]),
-            ('A', [235, 125, 125, 255]),
-            ('S', [185, 23, 45, 255]),
+            // space is nothing, so well use a soft blue as our background.
+            (' ', [61, 159, 184, 255]),
+            // Sand
+            ('X', [224, 210, 159, 255]),
+            // Fire
+            ('F', [224, 105, 54, 255]),
+            // Ash
+            ('A', [184, 182, 182, 255]),
+            // The Source
+            ('S', [128, 25, 14, 255]),
         ]))
+        // Set a time step so the simulation runs at a consistent speed.
         .with_time_step(std::time::Duration::from_secs_f32(0.1))
+        // Finish the build process.
         .build()
+        // And use the Live View to run and display the automaton.
         .run_live();
 }
