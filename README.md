@@ -7,7 +7,7 @@
 
 A library to easily crate and run [Cellular Automata](https://en.wikipedia.org/wiki/Cellular_automaton).
 
-### Basic features
+## Features
 
 Cellumina provides an ```Automaton``` struct that represents a 2-dimensional grid of characters.
 This grid can be initialized from a vector, a file or an image.
@@ -24,18 +24,36 @@ The transformation to the next state can be initiated manually or on a fixed tim
   * Example: [Rule 90](https://en.wikipedia.org/wiki/Rule_90).
   * Example: [Game Of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
 
+#### Planned Features
+
+It will also be possible to load rules from files and save them.
+
 ### Live View
 
 Cellumina can be run in 'Live View' mode.
 It will then take ownership of a configured automaton, run it by itself and display the cell state in a separate window.
 This is useful when just playing around with cellular automata.
 
+#### Planned Features
+
+ * Simulation control to allow the user to pause the simulation, speed it up or save the current state.
+ * Direct manipulation of cell state during live mode.
+
+## Usage
+
+To use Cellumina, simply import it via cargo:
+```toml
+  [dependencies]
+  cellumina = "0.1"
+```
+
+### Examples
+
+The [tests folder](https://github.com/Linus-Mussmaecher/cellumina/tree/master/tests) contains example implementations of both Conway's Game Of Life and a small falling sand simulation. Clone the library and run ```cargo test``` to view them.
+
 ### Performance
 
 Since pattern replacement can be a rather costly operation, cellumina runs these in parallel using the [rayon](https://github.com/rayon-rs/rayon) crate.
-
-### Planned Features
-
- * Interaction in Live View.
- * Loading rules from files and entire configurations from files.
- * Extensive examples.
+Small patterns (as they may appear when e.g. using a falling sand simulation to create a death animation or similar) have negligible runtime.
+Larger patters, especially with many patters or rules, may require more calculation time but can still be viewed in high FPS when running on their own.
+Note that the runtime considerably differs between compilation in debug and release configuration.
