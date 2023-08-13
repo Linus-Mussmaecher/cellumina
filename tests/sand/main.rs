@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use cellumina::rule::Pattern;
 
 fn main() {
-    cellumina::builder::AutomatonBuilder::new()
-        .from_file("./tests/sand/sand_init.txt")
+    cellumina::AutomatonBuilder::new()
+        .from_text_file("./tests/sand/sand_init.txt")
         .with_patterns(&vec![
             Pattern {
                 before: grid::grid![['X'][' '][' ']],
@@ -160,7 +160,7 @@ fn main() {
             ('A', [235, 125, 125, 255]),
             ('S', [185, 23, 45, 255]),
         ]))
-        .with_time_step(std::time::Duration::from_secs_f32(0.1))
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.1))
         .build()
         .run_live();
 }

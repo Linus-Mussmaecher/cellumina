@@ -1,6 +1,7 @@
 use wgpu::util::DeviceExt;
 
 use winit::{
+    dpi::PhysicalSize,
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::Window,
@@ -10,28 +11,37 @@ use winit::{
 use super::vertex;
 use crate::automaton;
 
-pub(crate) struct AutomatonDisplayer {
+/// A struct that holds an automaton and a lot of WebGL-State and can run and display that automaton.
+struct AutomatonDisplayer {
+    /// The WebGL Surface.
     surface: wgpu::Surface,
+    /// The WebGL Device.
     device: wgpu::Device,
+    /// The WebGL Queue.
     queue: wgpu::Queue,
+    /// The WebGL Config.
     config: wgpu::SurfaceConfiguration,
-    pub size: winit::dpi::PhysicalSize<u32>,
+    /// The winit-window being drawn to.
     window: Window,
+    /// The WebGL Render Pipeline.
     render_pipeline: wgpu::RenderPipeline,
 
-    // buffers
+    /// The current vertex buffer. Should always contain 4 Vertices forming a rectangle, but their positions may change.
     vertex_buffer: wgpu::Buffer,
+    /// The current index buffer (should not change, as we always draw a rectangle).
     index_buffer: wgpu::Buffer,
 
+    /// The contained automaton representing a cell state to draw.
     cell_state: automaton::Automaton,
-    /// The current texture
+    /// The current texture updated to the state of the automaton.
     cell_state_texture: wgpu::Texture,
-    /// The bind group used to draw the cell to the image.
+    /// The bind group used to draw the automaton's cells to the image.
     cell_state_bind_group: wgpu::BindGroup,
 }
 
 impl AutomatonDisplayer {
-    pub(crate) async fn new(window: Window, automaton: automaton::Automaton) -> Self {
+    /// Creates a new AutomatonDisplayer to draw the passed automaton to the passed window.
+    async fn new(window: Window, automaton: automaton::Automaton) -> Self {
         // +-------------------------------------------------------------+
         // |                                                             |
         // |                   GENERAL SETUP                             |
@@ -182,6 +192,11 @@ impl AutomatonDisplayer {
                 },
             ],
         });
+        // +-------------------------------------------------------------+
+        // |                                                             |
+        // |         Creating shader, render pipeline and buffers        |
+        // |                                                             |
+        // +-------------------------------------------------------------+
 
         // create & compile the shaders
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
@@ -252,7 +267,6 @@ impl AutomatonDisplayer {
             device,
             queue,
             config,
-            size,
             window,
             render_pipeline,
             vertex_buffer,
@@ -263,19 +277,22 @@ impl AutomatonDisplayer {
         }
     }
 
-    pub(crate) fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    /// Sets the physical window size whereever needed and also calculates the maximum rectangle with the same side length ratio as the contained automaton
+    /// still containable in this window and sets the vertex positions of the vertex buffer to the corners of that rectangle.
+    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         // update a lot of stuff
-        self.size = new_size;
         self.config.width = new_size.width;
         self.config.height = new_size.height;
         self.surface.configure(&self.device, &self.config);
 
         // get new vertex positions to keep ratio of display consistent
         let mut vertices = vertex::VERTICES;
+        // Calculate ratios
         let cell_ratio =
             self.cell_state.dimensions().1 as f32 / self.cell_state.dimensions().0 as f32;
         let win_ratio = new_size.width as f32 / new_size.height as f32;
 
+        // Based on the larger ratio, make the rectangle thinner or lower.
         if cell_ratio > win_ratio {
             for v in vertices.iter_mut() {
                 v.position[1] *= win_ratio / cell_ratio;
@@ -291,7 +308,8 @@ impl AutomatonDisplayer {
             .write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
     }
 
-    pub(crate) fn update(&mut self) {
+    /// Attempts to update the automaton, and if an update has happened writes its state to the buffers.
+    fn update(&mut self) {
         if self.cell_state.next_step() {
             self.queue.write_texture(
                 // copy destination
@@ -320,7 +338,8 @@ impl AutomatonDisplayer {
         }
     }
 
-    pub(crate) fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
+    /// Handles input events from the user. Returns wether any input has occured.
+    fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
         if let winit::event::WindowEvent::KeyboardInput {
             input:
                 winit::event::KeyboardInput {
@@ -341,6 +360,7 @@ impl AutomatonDisplayer {
         false
     }
 
+    /// Handles all sorts of window events.
     fn window_events(&mut self, control_flow: &mut ControlFlow, event: &WindowEvent<'_>) {
         match event {
             // close requested => close
@@ -391,7 +411,8 @@ impl AutomatonDisplayer {
         }
     }
 
-    pub(crate) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    /// Renders the currently stored automaton state to the window.
+    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         // get the current 'framebuffer'
         let output = self.surface.get_current_texture()?;
         // create a 'view' = definition how render code interacts with this texture
@@ -454,9 +475,8 @@ impl AutomatonDisplayer {
     }
 }
 
-pub async fn run_live(automaton: automaton::Automaton) {
-    env_logger::init();
-
+/// Creates an [AutomatonDisplayer] for the passed [automaton::Automaton], creates a window
+pub(crate) async fn run_live(automaton: automaton::Automaton) {
     let event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
@@ -490,11 +510,14 @@ pub async fn run_live(automaton: automaton::Automaton) {
                 match displayer.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if lost
-                    Err(wgpu::SurfaceError::Lost) => displayer.resize(displayer.size),
+                    Err(wgpu::SurfaceError::Lost) => displayer.resize(PhysicalSize::new(
+                        displayer.config.width,
+                        displayer.config.height,
+                    )),
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     // All other errors (Outdated, Timeout) should be resolved by the next frame
-                    Err(e) => eprintln!("{:?}", e),
+                    Err(e) => log::error!("{:?}", e),
                 }
             }
             Event::MainEventsCleared => {

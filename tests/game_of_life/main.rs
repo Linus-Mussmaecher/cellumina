@@ -1,6 +1,12 @@
 fn main() {
-    cellumina::builder::AutomatonBuilder::new()
-        .from_file("./tests/game_of_life/gol_init.txt")
+    cellumina::AutomatonBuilder::new()
+        .from_image_buffer(
+            image::io::Reader::open("./tests/game_of_life/gol_init3.png")
+                .expect("Could not read file.")
+                .decode()
+                .expect("Could not decode file.")
+                .into_rgba8(),
+        )
         .with_rule(cellumina::rule::EnvironmentRule {
             range_vert: 1,
             range_hor: 1,
@@ -19,8 +25,8 @@ fn main() {
                 _ => ' ',
             },
         })
-        .with_time_step(std::time::Duration::from_secs_f32(0.2))
-        .with_color('X', [90, 201, 71, 255])
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.2))
+        .with_color('X', [106, 190, 48, 255])
         .build()
         .run_live();
 }

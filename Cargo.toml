@@ -11,7 +11,6 @@ wgpu = "0.17"
 pollster = "0.3"
 bytemuck = { version = "1.13.1", features = [ "derive" ] }
 
-env_logger = "0.10"
 log = "0.4"
 
 image = "0.24"
@@ -27,5 +26,10 @@ serde = "1.0"
 
 [[test]]
 name = "sand"
+path = "tests/sand/main.rs"
+harness = false
+
+[[test]]
+name = "game_of_life"
 path = "tests/game_of_life/main.rs"
 harness = false
