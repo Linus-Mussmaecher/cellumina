@@ -3,6 +3,7 @@ use std::{collections::HashMap, time};
 use crate::{error::CelluminaError, rule, CellGrid};
 
 /// A struct that represents the current state and rule set of a cellular automaton.
+/// A cellular automaton has a state consisting of a (finite) character grid and a set of rules that describes how to process this grid to get the next state.
 pub struct Automaton {
     /// The current state of the automaton.
     pub(super) state: CellGrid,
@@ -12,17 +13,18 @@ pub struct Automaton {
     pub(super) step_mode: StepMode,
     /// The colors this automaton uses to convert itself to an image.
     pub(super) colors: HashMap<char, [u8; 4]>,
+    /// The time at which the automaton was created or the last step was performed.
+    pub(super) last_step: Option<time::Instant>,
 }
 
 /// Describes how often an [Automaton] executes its time step.
 pub(super) enum StepMode {
     /// Time steps are performed on every call of the [Automaton::next_step] function.
     Immediate,
-    /// Time steps are performed every interval, but at most once per call of the [Automaton::next_step] function.
-    Timed {
-        interval: time::Duration,
-        last_step: time::Instant,
-    },
+    /// Time steps are performed every interval, if multiple intervals have passed between two calls of [Automaton::next_step] the automaton will perform multiple steps.
+    Timed { interval: time::Duration },
+    /// Timed steps are performed every interval, but at most once per call of [Automaton::next_step].
+    TimedCapped { interval: time::Duration },
 }
 
 impl Automaton {
@@ -70,29 +72,39 @@ impl Automaton {
     /// ## Returns
     /// Wether or not the next time step was
     pub fn next_step(&mut self) -> bool {
+        if self.last_step.is_none() {
+            self.last_step = Some(time::Instant::now());
+        }
         match self.step_mode {
             StepMode::Immediate => {
                 self.rules.transform(&mut self.state);
+                self.last_step = Some(time::Instant::now());
                 true
             }
-            StepMode::Timed {
-                interval,
-                last_step,
-            } => {
-                if last_step.elapsed() >= interval {
+            StepMode::TimedCapped { interval } => {
+                if self.last_step.unwrap().elapsed() >= interval {
                     self.rules.transform(&mut self.state);
-                    self.step_mode = StepMode::Timed {
-                        last_step: time::Instant::now(),
-                        interval,
-                    };
+                    self.last_step = Some(time::Instant::now());
                     true
                 } else {
                     false
                 }
             }
+            StepMode::Timed { interval } => {
+                let mut step = self.last_step.unwrap();
+                let res = step.elapsed() >= interval;
+                while step.elapsed() >= interval {
+                    self.rules.transform(&mut self.state);
+                    step += interval;
+                }
+                self.last_step = Some(step);
+                res
+            }
         }
     }
 
+    /// Runs this automaton and displays it in a window.
+    /// ```next_step()``` is called every frame, so setting an appropriate time step may be helpful for a smooth display.
     pub fn run_live(self) {
         pollster::block_on(crate::graphic::run_live(self));
     }

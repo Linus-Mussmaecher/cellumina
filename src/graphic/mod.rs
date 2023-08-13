@@ -1,4 +1,3 @@
 mod displayer;
-pub use displayer::run_live;
-
+pub(crate) use displayer::run_live;
 mod vertex;

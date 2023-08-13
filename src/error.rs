@@ -1,4 +1,6 @@
+/// Internal Cellumina library error type.
 pub enum CelluminaError {
+    /// An Index-Out-Of-Bounds-Error when accessing the underlying state grid of an automaton.
     IndexOutOfBoundsError(u32, u32, u32, u32),
 }
 
