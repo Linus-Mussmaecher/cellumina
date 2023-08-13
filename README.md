@@ -18,7 +18,7 @@ The transformation to the next state can be initiated manually or on a fixed tim
 
 * Pattern Replacement Rules
   * Specifiy a pattern that is searched each stepped and replaced with a second pattern.
-  * Example: [Falling Sand Simulations](https://pvigier.github.io/2020/12/12/procedural-death-animation-with-falling-sand-automata.html).
+  * Example: [Falling Sand Simulations](https://w-shadow.com/blog/2009/09/29/falling-sand-style-water-simulation/).
 * Environment Rules
   * The next state of a cell is fully determined by its environment in the step before.
   * Example: [Rule 90](https://en.wikipedia.org/wiki/Rule_90).
