@@ -112,7 +112,29 @@ impl AutomatonBuilder {
                     grid
                 }
                 InitSource::Image(image) => {
-                    todo!()
+                    let mut grid = grid::Grid::new(
+                        image.dimensions().1 as usize,
+                        image.dimensions().0 as usize,
+                    );
+
+                    for row in 0..grid.rows() {
+                        for col in 0..grid.cols() {
+                            grid[row][col] = self
+                                .colors
+                                .iter()
+                                .find_map(|(key, value)| {
+                                    if value == &image.get_pixel(col as u32, row as u32).0 {
+                                        Some(key)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .copied()
+                                .unwrap_or(' ')
+                        }
+                    }
+
+                    grid
                 }
             },
             rules: {
