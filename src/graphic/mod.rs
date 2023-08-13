@@ -1,5 +1,6 @@
 mod displayer;
-pub(crate) use displayer::AutomatonDisplayer;
+pub use displayer::run_live;
+
 mod vertex;
 
 pub mod state;

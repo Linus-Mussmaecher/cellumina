@@ -9,7 +9,6 @@ use winit::{
 
 use super::vertex;
 use crate::automaton;
-use crate::rule;
 
 pub(crate) struct AutomatonDisplayer {
     surface: wgpu::Surface,
@@ -455,7 +454,7 @@ impl AutomatonDisplayer {
     }
 }
 
-pub(crate) async fn run_live(automaton: automaton::Automaton) {
+pub async fn run_live(automaton: automaton::Automaton) {
     env_logger::init();
 
     let event_loop = EventLoop::new();

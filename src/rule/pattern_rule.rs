@@ -10,10 +10,10 @@ pub struct PatternRule {
 
 #[derive(Debug, Clone)]
 pub struct Pattern {
-    chance: f32,
-    priority: f32,
-    before: CellGrid,
-    after: CellGrid,
+    pub chance: f32,
+    pub priority: f32,
+    pub before: CellGrid,
+    pub after: CellGrid,
 }
 
 impl Default for Pattern {
