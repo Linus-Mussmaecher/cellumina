@@ -4,6 +4,8 @@ use rand::seq::SliceRandom;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 /// A Pattern Rule works by looping over the current state and replacing every occurence of one or more certain patterns with another, equally sized pattern of characters.
+///
+/// For more information about how [Pattern]s are processed, see [Pattern].
 #[derive(Debug, Clone)]
 pub struct PatternRule {
     pub(crate) patterns: Vec<Pattern>,

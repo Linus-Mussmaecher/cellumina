@@ -12,7 +12,7 @@ pub trait Rule {
 }
 
 /// A multi rule consists of multiple rules. Each rule will be applied in order, and the result of the final application is the result of the multi rule.
-pub(crate) struct MultiRule {
+pub struct MultiRule {
     /// The collection of rules to be applied in order.
     pub(crate) rules: Vec<Box<dyn Rule>>,
 }

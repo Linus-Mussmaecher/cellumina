@@ -45,7 +45,7 @@ impl Automaton {
     }
 
     /// Returns the dimensions of this automaton's state grid as a tuple, first are the number of rows (height), then the number of columns (width).
-    /// The reason for this order is the column-major layouto of the underlying [grid::Grid] state representation.
+    /// The reason for this order is the column-major layout of the underlying [grid::Grid] state representation.
     pub fn dimensions(&self) -> (u32, u32) {
         (self.state.size().0 as u32, self.state.size().1 as u32)
     }
@@ -67,10 +67,10 @@ impl Automaton {
         }
     }
 
-    /// Checks wether the current [[StepMode]] permits a time step and, if it does, performs it.
-    /// A time step consists of applying this automatons rule to its state.
+    /// Checks if and how many time steps should currently be executed and performs them.
+    /// A time step consists of applying this automatons rule to its state, thus transforming the state.
     /// ## Returns
-    /// Wether or not the next time step was
+    /// Wether or not a transformation was applied.
     pub fn next_step(&mut self) -> bool {
         if self.last_step.is_none() {
             self.last_step = Some(time::Instant::now());
