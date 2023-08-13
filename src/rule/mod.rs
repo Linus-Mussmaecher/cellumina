@@ -6,11 +6,14 @@ pub use environment_rule::EnvironmentRule;
 pub use pattern_rule::Pattern;
 pub use pattern_rule::PatternRule;
 
+/// A rule describes a transition from one state of a cellular automaton to the next.
 pub trait Rule {
     fn transform(&self, grid: &mut CellGrid);
 }
 
+/// A multi rule consists of multiple rules. Each rule will be applied in order, and the result of the final application is the result of the multi rule.
 pub(crate) struct MultiRule {
+    /// The collection of rules to be applied in order.
     pub(crate) rules: Vec<Box<dyn Rule>>,
 }
 

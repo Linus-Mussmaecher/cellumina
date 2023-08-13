@@ -3,16 +3,31 @@ use crate::CellGrid;
 use rand::seq::SliceRandom;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
+/// A Pattern Rule works by looping over the current state and replacing every occurence of one or more certain patterns with another, equally sized pattern of characters.
 #[derive(Debug, Clone)]
 pub struct PatternRule {
     pub(crate) patterns: Vec<Pattern>,
 }
 
+/// A pattern consists both of a grid of cells to search for and a grid of cells to replace it with.
+///
+/// The ```before``` pattern may contain wildcards ```*``` to match any character.
+/// The ```after``` pattern may contain wildcards ```*``` to not mutate that cell and simply keep its previous value.
+///
+/// Whenever a pattern matches, the attribute might randomly be discarded instead of being applied.
+/// The ```chance``` attribute describes the likelihood of the pattern being applied without discard, i.e. any value over ```1.0``` means the pattern will always be applied when it matches.
+///
+/// If multiple patterns are applicable within a time step, the one with higher priority will always be applied first.
+/// Only if no cell concerning the second pattern has been mutated, the second pattern will apply also.
 #[derive(Debug, Clone)]
 pub struct Pattern {
+    /// The chance for the pattern to apply on a match.
     pub chance: f32,
+    /// The priority of this pattern over others.
     pub priority: f32,
+    /// The cell pattern to search for.
     pub before: CellGrid,
+    /// The cell pattern it should be replaced with.
     pub after: CellGrid,
 }
 
@@ -36,6 +51,8 @@ impl PatternRule {
     }
 }
 
+/// A collection of replacement actions, containing a priority, a position (row/column) and a placement character.
+/// A pattern will always produce such a collection of replacements belonging together.
 type ReplacementCollection = Vec<Vec<(f32, usize, usize, char)>>;
 
 impl Rule for PatternRule {
