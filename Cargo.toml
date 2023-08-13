@@ -8,7 +8,7 @@ description = "A library to configure and run cellular automata."
 readme = "README.md"
 repository = "https://github.com/Linus-Mussmaecher/cellumina"
 homepage = "https://github.com/Linus-Mussmaecher/cellumina"
-keywords = ["cellular automaton", "WebGL"]
+keywords = ["cellular", "automaton", "WebGL"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
