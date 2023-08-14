@@ -6,6 +6,49 @@ use crate::CellGrid;
 ///
 /// Note that each application of the ```cell_transform``` function will read from the entire untransformed array.
 /// Also, the environment will wrap around the grid edges.
+/// ```
+/// use cellumina::rule::Rule;
+/// let rule = cellumina::rule::EnvironmentRule {
+///     range_vert: 1,
+///     range_hor: 1,
+///     cell_transform: |env: &cellumina::CellGrid| match env
+///     // Iterate over neighbors.
+///         .iter()
+///         .enumerate()
+///         .map(|val| match val {
+///             // The cell we are transforming does not get counted.
+///             (4, 'X') => 0,
+///             // Any cell containing an 'X' counts for 1 (alive).
+///             (_, 'X') => 1,
+///             // Any cell containing any other entry (only ' ' in our initial configuration) counts as 0 (dead).
+///             _ => 0,
+///         })
+///         // Sum over these 9 values...
+///         .sum()
+///         // ... and map the sum to the new enty of our cell:
+///     {
+///         // 2 neighbors: The cell keeps its state.
+///         2 => env[1][1],
+///         // 3 neighbors: The cell gets born.
+///         3 => 'X',
+///         // 0, 1 or more than 3 neighbors: The cell dies.
+///         _ => ' ',
+///     },
+/// };
+/// let mut grid = grid::grid![[' ', ' ', 'X', ' ', ' '][' ', ' ', 'X',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', 'X', ' ', ' '][' ', ' ', 'X', ' ', ' ']];
+/// rule.transform(&mut grid);
+/// assert_eq!(
+///     grid,
+///     grid::grid![[' ', 'X', 'X', 'X', ' '][' ', ' ', ' ',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', ' ', ' ', ' '][' ', 'X', 'X', 'X', ' ']]
+/// );
+/// rule.transform(&mut grid);
+/// rule.transform(&mut grid);
+/// rule.transform(&mut grid);
+/// assert_eq!(
+///     grid,
+///     grid::grid![[' ', 'X', ' ', 'X', ' '][' ', ' ', 'X',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', 'X', ' ', ' '][' ', 'X', ' ', 'X', ' ']]
+/// );
+/// ```
 pub struct EnvironmentRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
