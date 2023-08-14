@@ -24,6 +24,7 @@ use crate::rule;
 /// Finally, the [Self::build()] function will consume this builder to create a [cellular automaton](automaton::Automaton).
 ///
 /// If the created automaton is running on a fixed time step, it will not start counting until [automaton::Automaton::next_step] is called for the first time.
+#[derive(Debug)]
 pub struct AutomatonBuilder {
     pattern_rule: rule::PatternRule,
     rules: Vec<Box<dyn rule::Rule>>,
@@ -32,13 +33,30 @@ pub struct AutomatonBuilder {
     step_mode: automaton::StepMode,
     // TODO: EdgeBehaviour
 }
-
 enum InitSource {
     None,
     TextFile(Box<dyn AsRef<std::path::Path>>),
     ImageFile(Box<dyn AsRef<std::path::Path>>),
     ImageBuffer(image::ImageBuffer<image::Rgba<u8>, Vec<u8>>),
     Grid(CellGrid),
+}
+
+impl std::fmt::Debug for InitSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "None"),
+            Self::TextFile(arg0) => f
+                .debug_tuple("TextFile")
+                .field(&(*arg0.as_ref()).as_ref().to_str())
+                .finish(),
+            Self::ImageFile(arg0) => f
+                .debug_tuple("ImageFile")
+                .field(&(*arg0.as_ref()).as_ref().to_str())
+                .finish(),
+            Self::ImageBuffer(arg0) => f.debug_tuple("ImageBuffer").field(arg0).finish(),
+            Self::Grid(arg0) => f.debug_tuple("Grid").field(arg0).finish(),
+        }
+    }
 }
 
 impl AutomatonBuilder {
