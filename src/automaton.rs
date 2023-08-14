@@ -4,6 +4,7 @@ use crate::{error::CelluminaError, rule, CellGrid};
 
 /// A struct that represents the current state and rule set of a cellular automaton.
 /// A cellular automaton has a state consisting of a (finite) character grid and a set of rules that describes how to process this grid to get the next state.
+#[derive(Debug)]
 pub struct Automaton {
     /// The current state of the automaton.
     pub(super) state: CellGrid,
@@ -18,6 +19,7 @@ pub struct Automaton {
 }
 
 /// Describes how often an [Automaton] executes its time step.
+#[derive(Clone, Copy, Debug)]
 pub(super) enum StepMode {
     /// Time steps are performed on every call of the [Automaton::next_step] function.
     Immediate,

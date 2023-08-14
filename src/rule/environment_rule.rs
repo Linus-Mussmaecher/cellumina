@@ -49,6 +49,7 @@ use crate::CellGrid;
 ///     grid::grid![[' ', 'X', ' ', 'X', ' '][' ', ' ', 'X',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', 'X', ' ', ' '][' ', 'X', ' ', 'X', ' ']]
 /// );
 /// ```
+#[derive(Clone, Copy)]
 pub struct EnvironmentRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
@@ -58,6 +59,15 @@ pub struct EnvironmentRule {
     pub range_hor: usize,
     /// The environemnt rules. Need to be complete.
     pub cell_transform: fn(&CellGrid) -> char,
+}
+
+impl std::fmt::Debug for EnvironmentRule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EnvironmentRule")
+            .field("range_vert", &self.range_vert)
+            .field("range_hor", &self.range_hor)
+            .finish()
+    }
 }
 
 impl super::Rule for EnvironmentRule {
