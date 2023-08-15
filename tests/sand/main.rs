@@ -199,7 +199,7 @@ fn main() {
             ('S', [128, 25, 14, 255]),
         ]))
         // Set a time step so the simulation runs at a consistent speed.
-        .with_time_step(std::time::Duration::from_secs_f32(0.1))
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.1))
         // Finish the build process.
         .build()
         // And use the Live View to run and display the automaton.
