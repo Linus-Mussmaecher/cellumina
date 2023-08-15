@@ -32,6 +32,11 @@ pub(super) struct AutomatonDisplayer {
     /// The current index buffer (should not change, as we always draw a rectangle).
     index_buffer: wgpu::Buffer,
 
+    /// The cell the user's mouse is currently hovering.
+    hovered_cell: Option<(u32, u32)>,
+    ///
+    mouse_down: bool,
+
     /// The contained automaton representing a cell state to draw.
     cell_state: automaton::Automaton,
     /// The current texture updated to the state of the automaton.
@@ -275,6 +280,8 @@ impl AutomatonDisplayer {
             cell_state: automaton,
             cell_state_texture,
             cell_state_bind_group,
+            hovered_cell: None,
+            mouse_down: false,
         }
     }
 
@@ -311,6 +318,14 @@ impl AutomatonDisplayer {
 
     /// Attempts to update the automaton, and if an update has happened writes its state to the buffers.
     fn update(&mut self) {
+        if self.mouse_down {
+            if let Some((row, col)) = self.hovered_cell {
+                self.cell_state
+                    .set_cell(row, col, 'X')
+                    .expect("Setting went wrong.");
+            }
+        }
+
         if self.cell_state.next_step() {
             self.queue.write_texture(
                 // copy destination
@@ -356,6 +371,46 @@ impl AutomatonDisplayer {
                 Some(_) => {}
                 None => {}
             }
+        }
+
+        // if the cursor moves, calculate the cell it is hovering over, if any
+        if let winit::event::WindowEvent::CursorMoved { position, .. } = event {
+            // calculate the height and width of a cell if the state was stretched to the whole window
+            let pixels_per_col = self.config.width as f64 / self.cell_state.dimensions().1 as f64; // pixels per cell
+            let pixels_per_row = self.config.height as f64 / self.cell_state.dimensions().0 as f64; // pixels per cell
+
+            // since the state is only stretched until either direction reaches the window borders, the true side length of a cell is the minimum
+            let pixels_per_cell = pixels_per_col.min(pixels_per_row);
+
+            let (cell_row, cell_col) = (
+                ((position.y - self.config.height as f64 / 2.) / pixels_per_cell
+                    + self.cell_state.dimensions().0 as f64 / 2.),
+                ((position.x - self.config.width as f64 / 2.) / pixels_per_cell
+                    + self.cell_state.dimensions().1 as f64 / 2.),
+            );
+
+            if 0. <= cell_col
+                && cell_col < self.cell_state.dimensions().1 as f64
+                && 0. <= cell_row
+                && cell_row < self.cell_state.dimensions().0 as f64
+            {
+                self.hovered_cell = Some((cell_row as u32, cell_col as u32));
+            } else {
+                self.hovered_cell = None
+            }
+        }
+
+        if let winit::event::WindowEvent::MouseInput {
+            state,
+            button: winit::event::MouseButton::Left,
+            ..
+        } = event
+        {
+            match state {
+                ElementState::Pressed => self.mouse_down = true,
+                ElementState::Released => self.mouse_down = false,
+            }
+            println!("Event: {}", self.mouse_down);
         }
 
         false

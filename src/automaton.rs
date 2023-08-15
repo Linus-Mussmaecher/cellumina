@@ -16,6 +16,8 @@ pub struct Automaton {
     pub(super) colors: HashMap<char, [u8; 4]>,
     /// The time at which the automaton was created or the last step was performed.
     pub(super) last_step: Option<time::Instant>,
+    /// Wether a manual state change was performed between the current stept and the previous one.
+    pub(super) manual_change: bool,
 }
 
 /// Describes how often an [Automaton] executes its time step.
@@ -64,6 +66,7 @@ impl Automaton {
                 self.state.size().1 as u32,
             ))
         } else {
+            self.manual_change = self.state[row as usize][col as usize] != new_val;
             self.state[row as usize][col as usize] = new_val;
             Ok(())
         }
@@ -77,32 +80,33 @@ impl Automaton {
         if self.last_step.is_none() {
             self.last_step = Some(time::Instant::now());
         }
-        match self.step_mode {
-            StepMode::Immediate => {
-                self.rules.transform(&mut self.state);
-                self.last_step = Some(time::Instant::now());
-                true
-            }
-            StepMode::TimedCapped { interval } => {
-                if self.last_step.unwrap().elapsed() >= interval {
+        self.manual_change
+            | match self.step_mode {
+                StepMode::Immediate => {
                     self.rules.transform(&mut self.state);
                     self.last_step = Some(time::Instant::now());
                     true
-                } else {
-                    false
+                }
+                StepMode::TimedCapped { interval } => {
+                    if self.last_step.unwrap().elapsed() >= interval {
+                        self.rules.transform(&mut self.state);
+                        self.last_step = Some(time::Instant::now());
+                        true
+                    } else {
+                        false
+                    }
+                }
+                StepMode::Timed { interval } => {
+                    let mut step = self.last_step.unwrap();
+                    let res = step.elapsed() >= interval;
+                    while step.elapsed() >= interval {
+                        self.rules.transform(&mut self.state);
+                        step += interval;
+                    }
+                    self.last_step = Some(step);
+                    res
                 }
             }
-            StepMode::Timed { interval } => {
-                let mut step = self.last_step.unwrap();
-                let res = step.elapsed() >= interval;
-                while step.elapsed() >= interval {
-                    self.rules.transform(&mut self.state);
-                    step += interval;
-                }
-                self.last_step = Some(step);
-                res
-            }
-        }
     }
 
     /// Runs this automaton and displays it in a window.

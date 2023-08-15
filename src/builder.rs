@@ -241,6 +241,7 @@ impl AutomatonBuilder {
             step_mode: self.step_mode,
             last_step: None,
             colors: self.colors,
+            manual_change: false,
         }
     }
 

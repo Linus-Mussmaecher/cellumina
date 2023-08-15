@@ -36,7 +36,7 @@ fn main() {
             },
         })
         // Set a minimum time step.
-        .with_min_time_step(std::time::Duration::from_secs_f32(1.5))
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.2))
         // Set a display color for the live cells. This color needs to match the color of the live cells in our source image.
         .with_color('X', [95, 205, 228, 255])
         // Finish the build process.
