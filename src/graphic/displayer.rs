@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use wgpu::util::DeviceExt;
 
 use winit::{
@@ -34,8 +36,12 @@ pub(super) struct AutomatonDisplayer {
 
     /// The cell the user's mouse is currently hovering.
     hovered_cell: Option<(u32, u32)>,
-    ///
+    /// The current state of the main mouse button.
     mouse_down: bool,
+    /// The char the currently hovered cell is replaced with on mouse click.
+    replacement_char: char,
+    /// The keymap used to convert from VirtualKeyCode to character
+    keymap: HashMap<winit::event::VirtualKeyCode, char>,
 
     /// The contained automaton representing a cell state to draw.
     cell_state: automaton::Automaton,
@@ -282,6 +288,8 @@ impl AutomatonDisplayer {
             cell_state_bind_group,
             hovered_cell: None,
             mouse_down: false,
+            replacement_char: 'X',
+            keymap: get_keymap(),
         }
     }
 
@@ -320,9 +328,13 @@ impl AutomatonDisplayer {
     fn update(&mut self) {
         if self.mouse_down {
             if let Some((row, col)) = self.hovered_cell {
-                self.cell_state
-                    .set_cell(row, col, 'X')
-                    .expect("Setting went wrong.");
+                if self
+                    .cell_state
+                    .set_cell(row, col, self.replacement_char)
+                    .is_err()
+                {
+                    log::error!("Could not set cell state.");
+                }
             }
         }
 
@@ -367,8 +379,12 @@ impl AutomatonDisplayer {
         } = event
         {
             match virtual_keycode {
-                Some(winit::event::VirtualKeyCode::Space) => {}
-                Some(_) => {}
+                Some(winit::event::VirtualKeyCode::Space) => {
+                    self.replacement_char = ' ';
+                }
+                Some(code) => {
+                    self.replacement_char = self.keymap.get(code).copied().unwrap_or(' ');
+                }
                 None => {}
             }
         }
@@ -584,4 +600,35 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
             _ => {}
         }
     });
+}
+
+fn get_keymap() -> HashMap<winit::event::VirtualKeyCode, char> {
+    HashMap::from([
+        (winit::event::VirtualKeyCode::A, 'A'),
+        (winit::event::VirtualKeyCode::B, 'B'),
+        (winit::event::VirtualKeyCode::C, 'C'),
+        (winit::event::VirtualKeyCode::D, 'D'),
+        (winit::event::VirtualKeyCode::E, 'E'),
+        (winit::event::VirtualKeyCode::F, 'F'),
+        (winit::event::VirtualKeyCode::G, 'G'),
+        (winit::event::VirtualKeyCode::H, 'H'),
+        (winit::event::VirtualKeyCode::I, 'I'),
+        (winit::event::VirtualKeyCode::J, 'J'),
+        (winit::event::VirtualKeyCode::K, 'K'),
+        (winit::event::VirtualKeyCode::L, 'L'),
+        (winit::event::VirtualKeyCode::M, 'M'),
+        (winit::event::VirtualKeyCode::N, 'N'),
+        (winit::event::VirtualKeyCode::O, 'O'),
+        (winit::event::VirtualKeyCode::P, 'P'),
+        (winit::event::VirtualKeyCode::Q, 'Q'),
+        (winit::event::VirtualKeyCode::R, 'R'),
+        (winit::event::VirtualKeyCode::S, 'S'),
+        (winit::event::VirtualKeyCode::T, 'T'),
+        (winit::event::VirtualKeyCode::U, 'U'),
+        (winit::event::VirtualKeyCode::V, 'V'),
+        (winit::event::VirtualKeyCode::W, 'W'),
+        (winit::event::VirtualKeyCode::X, 'X'),
+        (winit::event::VirtualKeyCode::Y, 'Y'),
+        (winit::event::VirtualKeyCode::Z, 'Z'),
+    ])
 }

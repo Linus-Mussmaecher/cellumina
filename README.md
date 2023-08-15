@@ -34,10 +34,11 @@ Cellumina can be run in 'Live View' mode.
 It will then take ownership of a configured automaton, run it by itself and display the cell state in a separate window.
 This is useful when just playing around with cellular automata.
 
+The user can also directly change the state of cells. Press any (character or space) button, and then mouse clicks will replace the currently hovered cell with the pressed character.
+
 #### Planned Features
 
  * Simulation control to allow the user to pause the simulation, speed it up or save the current state.
- * Direct manipulation of cell state during live mode.
 
 ## Usage
 
