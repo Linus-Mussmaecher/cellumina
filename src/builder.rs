@@ -73,22 +73,13 @@ impl AutomatonBuilder {
 
     /// Set a minimum time step for the automaton.
     ///
-    /// When choosing this option, the automaton will update itself every interval, but at most once per call of [automaton::Automaton::next_step].
+    /// Setting a minimum time step causes the automatons [`next_step()`](automaton::Automaton::next_step) function to only perform a time step if a duration ```interval``` has elapsed since its previous invocation.
+    /// This allows you to call ```next_step()``` every frame of your application, but invoke time steps with a much lower frame rate.
+    /// Note that the return value of ```next_step()``` can be used to determine if the state has changed since last invocation and a redraw is neccessary.
     ///
-    /// Use this when the automaton is taking up a majority of your computing time.
+    /// See also: [`automaton::Automaton::next_step()`].
     pub fn with_min_time_step(mut self, interval: std::time::Duration) -> Self {
-        self.step_mode = automaton::StepMode::TimedCapped { interval };
-        self
-    }
-
-    /// Set a fixed time step for the automaton.
-    ///
-    /// When choosing this option, the automaton will update itself every interval.
-    /// If the duration between two calls of [next_step()](automaton::Automaton::next_step) is longer than intervall, the automaton will perform multiple steps to catch up.
-    ///
-    /// Use this if calculating the next step is only taking up a small amount of computation time compared to other tasks, and the above scenario may happen regularly.
-    pub fn with_time_step(mut self, interval: std::time::Duration) -> Self {
-        self.step_mode = automaton::StepMode::Timed { interval };
+        self.step_mode = automaton::StepMode::Limited { interval };
         self
     }
 

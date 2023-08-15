@@ -25,10 +25,8 @@ pub struct Automaton {
 pub(super) enum StepMode {
     /// Time steps are performed on every call of the [Automaton::next_step] function.
     Immediate,
-    /// Time steps are performed every interval, if multiple intervals have passed between two calls of [Automaton::next_step] the automaton will perform multiple steps.
-    Timed { interval: time::Duration },
     /// Timed steps are performed every interval, but at most once per call of [Automaton::next_step].
-    TimedCapped { interval: time::Duration },
+    Limited { interval: time::Duration },
 }
 
 impl Automaton {
@@ -75,36 +73,27 @@ impl Automaton {
     /// Checks if and how many time steps should currently be executed and performs them.
     /// A time step consists of applying this automatons rule to its state, thus transforming the state.
     /// ## Returns
-    /// Wether or not a transformation was applied.
+    /// Wether or not the state has changed since the last invocation of [next_step](Automaton::next_step()), either because a time step was performed or by manual interaction between steps.
     pub fn next_step(&mut self) -> bool {
+        // if the automaton has just started, set last step for the first time
         if self.last_step.is_none() {
             self.last_step = Some(time::Instant::now());
         }
-        self.manual_change
+        // set manual change to false, then return its previous state and OR it with the result of the transformation
+        std::mem::take(&mut self.manual_change)
             | match self.step_mode {
                 StepMode::Immediate => {
                     self.rules.transform(&mut self.state);
                     self.last_step = Some(time::Instant::now());
                     true
                 }
-                StepMode::TimedCapped { interval } => {
-                    if self.last_step.unwrap().elapsed() >= interval {
+                StepMode::Limited { interval } => {
+                    let step_permitted = self.last_step.unwrap().elapsed() >= interval;
+                    if step_permitted {
                         self.rules.transform(&mut self.state);
                         self.last_step = Some(time::Instant::now());
-                        true
-                    } else {
-                        false
                     }
-                }
-                StepMode::Timed { interval } => {
-                    let mut step = self.last_step.unwrap();
-                    let res = step.elapsed() >= interval;
-                    while step.elapsed() >= interval {
-                        self.rules.transform(&mut self.state);
-                        step += interval;
-                    }
-                    self.last_step = Some(step);
-                    res
+                    step_permitted
                 }
             }
     }
