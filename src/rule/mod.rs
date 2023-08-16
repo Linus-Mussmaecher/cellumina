@@ -4,6 +4,7 @@ mod pattern_rule;
 use std::fmt::Debug;
 
 use super::CellGrid;
+pub use environment_rule::EdgeBehaviour;
 pub use environment_rule::EnvironmentRule;
 pub use pattern_rule::Pattern;
 pub use pattern_rule::PatternRule;

@@ -11,6 +11,7 @@ fn main() {
             // Each cell only cares about neighbors 1 field away.
             range_vert: 1,
             range_hor: 1,
+            edge_behaviour: cellumina::rule::EdgeBehaviour::Show,
             cell_transform: |env| match env
             // Iterate over neighbors.
                 .iter()

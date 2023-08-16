@@ -10,6 +10,7 @@ use crate::CellGrid;
 /// use cellumina::rule::Rule;
 /// let rule = cellumina::rule::EnvironmentRule {
 ///     range_vert: 1,
+///     edge_behaviour: cellumina::rule::EdgeBehaviour::Wrap,
 ///     range_hor: 1,
 ///     cell_transform: |env: &cellumina::CellGrid| match env
 ///     // Iterate over neighbors.
@@ -57,8 +58,28 @@ pub struct EnvironmentRule {
     /// The horizontal range of an environment, extending in both direction from the cell to be transformed.
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
     pub range_hor: usize,
+    /// How the rule is supposed to handle cells at the edges of the state space.
+    pub edge_behaviour: EdgeBehaviour,
     /// The environemnt rules. Need to be complete.
     pub cell_transform: fn(&CellGrid) -> char,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub enum EdgeBehaviour {
+    #[default]
+    Wrap,
+    Show,
+}
+
+impl Default for EnvironmentRule {
+    fn default() -> Self {
+        Self {
+            range_vert: Default::default(),
+            range_hor: Default::default(),
+            edge_behaviour: Default::default(),
+            cell_transform: |_| ' ',
+        }
+    }
 }
 
 impl std::fmt::Debug for EnvironmentRule {
@@ -73,18 +94,34 @@ impl std::fmt::Debug for EnvironmentRule {
 impl super::Rule for EnvironmentRule {
     fn transform(&self, grid: &mut CellGrid) {
         let mut buffer = grid::Grid::new(2 * self.range_vert + 1, 2 * self.range_hor + 1);
-        let (h, w) = grid.size();
+        let (rows, cols) = grid.size();
 
         // correction factor to make sure no overflowing subtractions happen
 
-        let mut res = CellGrid::new(h, w);
+        let mut res = CellGrid::new(rows, cols);
 
-        for row in 0..h {
-            for col in 0..w {
+        for row in 0..rows {
+            for col in 0..cols {
                 for row_del in 0..=2 * self.range_vert {
                     for col_del in 0..=2 * self.range_hor {
-                        buffer[row_del][col_del] = grid[(row + h + row_del - self.range_vert) % h]
-                            [(col + w + col_del - self.range_hor) % w];
+                        // Fill the buffer with values from the grid
+                        buffer[row_del][col_del] = grid
+                            // try to get normally
+                            .get(
+                                (row + row_del).wrapping_sub(self.range_vert),
+                                (col + col_del).wrapping_sub(self.range_hor),
+                            )
+                            .copied()
+                            // if outside of grid, check edge behavior
+                            .unwrap_or_else(|| match self.edge_behaviour {
+                                // Wrap: Do a modulus calculation to get from the other side of the grid
+                                EdgeBehaviour::Wrap => {
+                                    grid[(row + rows + row_del - self.range_vert) % rows]
+                                        [(col + cols + col_del - self.range_hor) % cols]
+                                }
+                                // Show: Show 'Outside Of Grid'-Cells as Underscore.
+                                EdgeBehaviour::Show => '_',
+                            });
                     }
                 }
                 res[row][col] = (self.cell_transform)(&buffer);
