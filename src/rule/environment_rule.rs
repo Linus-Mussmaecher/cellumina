@@ -59,16 +59,9 @@ pub struct EnvironmentRule {
     /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
     pub range_hor: usize,
     /// How the rule is supposed to handle cells at the edges of the state space.
-    pub edge_behaviour: EdgeBehaviour,
+    pub edge_behaviour: super::EdgeBehaviour,
     /// The environemnt rules. Need to be complete.
     pub cell_transform: fn(&CellGrid) -> char,
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub enum EdgeBehaviour {
-    #[default]
-    Wrap,
-    Show,
 }
 
 impl Default for EnvironmentRule {
@@ -115,12 +108,12 @@ impl super::Rule for EnvironmentRule {
                             // if outside of grid, check edge behavior
                             .unwrap_or_else(|| match self.edge_behaviour {
                                 // Wrap: Do a modulus calculation to get from the other side of the grid
-                                EdgeBehaviour::Wrap => {
+                                super::EdgeBehaviour::Wrap => {
                                     grid[(row + rows + row_del - self.range_vert) % rows]
                                         [(col + cols + col_del - self.range_hor) % cols]
                                 }
                                 // Show: Show 'Outside Of Grid'-Cells as Underscore.
-                                EdgeBehaviour::Show => '_',
+                                super::EdgeBehaviour::Show => '_',
                             });
                     }
                 }
