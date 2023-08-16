@@ -1,4 +1,4 @@
-use super::Rule;
+use super::{EdgeBehaviour, Rule};
 use crate::CellGrid;
 use rand::seq::SliceRandom;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -56,6 +56,8 @@ pub struct Pattern {
     pub before: CellGrid,
     /// The cell pattern it should be replaced with.
     pub after: CellGrid,
+    /// W
+    pub edge_behaviour: EdgeBehaviour,
 }
 
 impl Default for Pattern {
@@ -65,6 +67,7 @@ impl Default for Pattern {
             priority: 0.,
             before: grid::grid![['*']],
             after: grid::grid![['*']],
+            edge_behaviour: EdgeBehaviour::Show,
         }
     }
 }

@@ -16,6 +16,7 @@ fn main() {
                 after: grid::grid![[' '][' ']['X']],
                 priority: 1.0,
                 chance: 0.9,
+                ..Default::default()
             },
             Pattern {
                 before: grid::grid![['X'][' ']],
@@ -132,6 +133,7 @@ fn main() {
                 before: grid::grid![['F']],
                 after: grid::grid![['A']],
                 priority: 1.,
+                ..Default::default()
             },
             // Ash falls downwards at a slower pace than sand, no 2-move rule here.
             Pattern {

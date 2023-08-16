@@ -4,7 +4,6 @@ mod pattern_rule;
 use std::fmt::Debug;
 
 use super::CellGrid;
-pub use environment_rule::EdgeBehaviour;
 pub use environment_rule::EnvironmentRule;
 pub use pattern_rule::Pattern;
 pub use pattern_rule::PatternRule;
@@ -27,4 +26,13 @@ impl Rule for MultiRule {
             rule.transform(grid);
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub enum EdgeBehaviour {
+    #[default]
+    /// When trying to get a cell from an index outside of the state space, wrap around
+    Wrap,
+    /// When trying to get a cell from outside the state space, return '_' to indicate a wall.
+    Show,
 }
