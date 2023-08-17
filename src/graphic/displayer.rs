@@ -426,7 +426,6 @@ impl AutomatonDisplayer {
                 ElementState::Pressed => self.mouse_down = true,
                 ElementState::Released => self.mouse_down = false,
             }
-            println!("Event: {}", self.mouse_down);
         }
 
         false
