@@ -90,8 +90,10 @@ impl Automaton {
                 StepMode::Limited { interval } => {
                     let step_permitted = self.last_step.unwrap().elapsed() >= interval;
                     if step_permitted {
+                        let before = time::Instant::now();
                         self.rules.transform(&mut self.state);
                         self.last_step = Some(time::Instant::now());
+                        println!("Time step performed in {}.", before.elapsed().as_secs_f32());
                     }
                     step_permitted
                 }

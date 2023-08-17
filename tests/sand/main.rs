@@ -8,6 +8,7 @@ fn main() {
     cellumina::AutomatonBuilder::new()
         // Use a text file as source of initial state.
         .from_text_file("./tests/sand/sand_init.txt")
+        .with_pattern_edge_behaviour(cellumina::rule::EdgeBehaviour::Wrap)
         // Now specify the patters we want to use to transform our state.
         .with_patterns(&vec![
             // Sand (X) falls down by one or even two spaces if possible.
@@ -16,7 +17,6 @@ fn main() {
                 after: grid::grid![[' '][' ']['X']],
                 priority: 1.0,
                 chance: 0.9,
-                ..Default::default()
             },
             Pattern {
                 before: grid::grid![['X'][' ']],
@@ -133,7 +133,6 @@ fn main() {
                 before: grid::grid![['F']],
                 after: grid::grid![['A']],
                 priority: 1.,
-                ..Default::default()
             },
             // Ash falls downwards at a slower pace than sand, no 2-move rule here.
             Pattern {

@@ -143,6 +143,12 @@ impl AutomatonBuilder {
         self
     }
 
+    /// Modifies the [rule::EdgeBehaviour] of the internal [rule::PatternRule].
+    pub fn with_pattern_edge_behaviour(mut self, edge_behaviour: rule::EdgeBehaviour) -> Self {
+        self.pattern_rule.edge_behaviour = edge_behaviour;
+        self
+    }
+
     /// Adds a rule to this automaton.
     ///
     /// Adding multiple rules will combine them into a single [MultiRule](rule::MultiRule) on construction.
