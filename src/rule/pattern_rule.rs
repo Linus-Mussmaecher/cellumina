@@ -56,7 +56,7 @@ pub struct Pattern {
     pub before: CellGrid,
     /// The cell pattern it should be replaced with.
     pub after: CellGrid,
-    /// W
+    /// How the pattern will deal with the edges of the state space. Currently non-functional.
     pub edge_behaviour: EdgeBehaviour,
 }
 
