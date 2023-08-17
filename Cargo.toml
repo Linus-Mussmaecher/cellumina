@@ -19,6 +19,7 @@ pollster = "0.3"
 bytemuck = { version = "1.13.1", features = [ "derive" ] }
 
 log = "0.4"
+env_logger = "0.10"
 
 image = "0.24"
 
