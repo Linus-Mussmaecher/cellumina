@@ -113,7 +113,7 @@ impl super::Rule for EnvironmentRule {
                                         [(col + cols + col_del - self.range_hor) % cols]
                                 }
                                 // Show: Show 'Outside Of Grid'-Cells as Underscore.
-                                super::EdgeBehaviour::Show => '_',
+                                super::EdgeBehaviour::Stop => '_',
                             });
                     }
                 }

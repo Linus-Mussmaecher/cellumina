@@ -8,6 +8,7 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 /// For more information about how [Pattern]s are processed, see [Pattern].
 #[derive(Debug, Clone)]
 pub struct PatternRule {
+    /// The replacment patterns of this rule.
     pub(crate) patterns: Vec<Pattern>,
     /// How the patterns in this rule will deal with the edges of the state space. Currently non-functional.
     pub(crate) edge_behaviour: EdgeBehaviour,
@@ -40,7 +41,7 @@ pub struct PatternRule {
 ///             after: grid::grid![['X', 'X'][' ', ' ']],
 ///         },
 ///     ],
-///     cellumina::rule::EdgeBehaviour::Show,
+///     cellumina::rule::EdgeBehaviour::Stop,
 /// );
 ///
 /// let mut grid = grid::grid![[' ', 'X']['X', ' '][' ', ' ']];
@@ -77,7 +78,7 @@ impl PatternRule {
     pub fn new_empty() -> Self {
         Self {
             patterns: Vec::new(),
-            edge_behaviour: EdgeBehaviour::Show,
+            edge_behaviour: EdgeBehaviour::Stop,
         }
     }
 
@@ -103,8 +104,17 @@ impl Rule for PatternRule {
             .par_iter()
             .filter_map(|pattern| {
                 let mut partial_res = Vec::new();
-                for row in 0..rows {
-                    'inner_loop: for col in 0..cols {
+
+                let (row_stop, col_stop) = match self.edge_behaviour {
+                    EdgeBehaviour::Wrap => (rows, cols),
+                    EdgeBehaviour::Stop => (
+                        rows - pattern.before.rows() + 1,
+                        cols - pattern.before.cols() + 1,
+                    ),
+                };
+
+                for row in 0..row_stop {
+                    'inner_loop: for col in 0..col_stop {
                         let (p_rows, p_cols) = pattern.after.size();
 
                         // possibly immediately randomly stop to adhere to pattern chance
@@ -116,20 +126,12 @@ impl Rule for PatternRule {
                         for row_del in 0..p_rows {
                             for col_del in 0..p_cols {
                                 if pattern.before[row_del][col_del] != '*'
+                                // do modulo in case we are wrapping - if edge behaviour is set to stop, this will never change anything
                                     && grid
                                         .get(row + row_del, col + col_del)
                                         .copied()
-                                        // to get the char, try to get it normally. If we would move out of bounds, check edge behaviour
-                                        .unwrap_or_else(|| match self.edge_behaviour {
-                                            // if set to Wrap, wrap around the cell grid
-                                            EdgeBehaviour::Wrap => {
-                                                grid[(row + rows + row_del) % rows]
-                                                    [(col + cols + col_del) % cols]
-                                            }
-                                            // if set to show, display an underscore to indicate a wall
-                                            EdgeBehaviour::Show => '_',
-                                        })
-                                        != pattern.before[row_del][col_del]
+                                        .unwrap_or_else(|| grid[(row + row_del)%rows][(col + col_del) % cols])
+                                    != pattern.before[row_del][col_del]
                                 {
                                     continue 'inner_loop;
                                 }
@@ -143,15 +145,8 @@ impl Rule for PatternRule {
                             for col_del in 0..p_cols {
                                 let rep = pattern.after[row_del][col_del];
                                 // make sure to not replace wild cards, and check edge behaviour
-                                if rep != '*'
-                                // only push changes if within bounds, or edge behaviours is set to wrap
-                                    && ((row + row_del < rows && col + col_del < cols)
-                                        || match self.edge_behaviour {
-                                            EdgeBehaviour::Wrap => true,
-                                            EdgeBehaviour::Show => false,
-                                        })
-                                {
-                                    // not that we still apply a modulus to the coordinates, so if this was let through by wrap behaviour, we are not actually moving out of bounds
+                                if rep != '*' {
+                                    // apply modulus to replacement coordinates to be sure
                                     rep_group.push((
                                         pattern.priority,
                                         (row + row_del) % rows,

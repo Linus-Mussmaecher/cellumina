@@ -34,5 +34,6 @@ pub enum EdgeBehaviour {
     /// When trying to get a cell from an index outside of the state space, wrap around
     Wrap,
     /// When trying to get a cell from outside the state space, return '_' to indicate a wall.
-    Show,
+    /// PatternRules will not check subareas that leave the state space.
+    Stop,
 }
