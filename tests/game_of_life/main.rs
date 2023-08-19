@@ -1,7 +1,7 @@
 /// This example implements John Conway's Game Of Life.
 fn main() {
     // Create a new Cellular Automaton using the builder.
-    let gol = cellumina::AutomatonBuilder::new()
+    cellumina::AutomatonBuilder::new()
         // Use an image to supply the initial configuration.
         .from_image_file("./tests/game_of_life/gol_init3.png")
         // Alternative source: Load the the initial state from a .txt file.
@@ -41,10 +41,7 @@ fn main() {
         // Set a display color for the live cells. This color needs to match the color of the live cells in our source image.
         .with_color('X', [95, 205, 228, 255])
         // Finish the build process.
-        .build();
-
-    println!("{:?}", gol);
-
-    // ... and run the automaton with graphical output.
-    gol.run_live();
+        .build()
+        // And run the automaton with graphical output.
+        .run_live();
 }
