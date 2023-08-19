@@ -3,6 +3,7 @@ use crate::CellGrid;
 use rand::seq::SliceRandom;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 /// A Pattern Rule works by looping over the current state and replacing every occurence of one or more certain patterns with another, equally sized pattern of characters.
 ///
@@ -65,21 +66,6 @@ pub struct Pattern {
     pub after: CellGrid,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(remote = "grid::Grid")]
-struct SerdeGrid<T> {
-    #[serde(getter = "grid::Grid::flatten")]
-    data: Vec<T>,
-    #[serde(getter = "grid::Grid::cols")]
-    cols: usize,
-}
-
-impl<T> From<SerdeGrid<T>> for grid::Grid<T> {
-    fn from(value: SerdeGrid<T>) -> Self {
-        grid::Grid::from_vec(value.data, value.cols)
-    }
-}
-
 impl Default for Pattern {
     fn default() -> Self {
         Self {
@@ -88,6 +74,98 @@ impl Default for Pattern {
             before: grid::grid![['*']],
             after: grid::grid![['*']],
         }
+    }
+}
+
+impl Display for Pattern {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{};", self.chance)?;
+        write!(f, "{};", self.priority)?;
+        for row in self.before.iter_rows() {
+            writeln!(f)?;
+            for b_cell in row {
+                write!(f, "{}", b_cell)?;
+            }
+        }
+        write!(f, ";")?;
+        for row in self.after.iter_rows() {
+            writeln!(f)?;
+            for a_cell in row {
+                write!(f, "{}", a_cell)?;
+            }
+        }
+        writeln!(f, ";")
+    }
+}
+/// ```
+/// use cellumina::rule::Rule;
+/// let pattern = cellumina::rule::Pattern{
+///             chance: 1.0,
+///             priority: 1.0,
+///             before: grid::grid![[' ', ' ', 'X'][' ', 'X', 'X']],
+///             after: grid::grid![['*', '*', ' ']['X', '*', '*']],
+///         };
+/// let pattern2 = cellumina::rule::Pattern::from(pattern.to_string());
+/// assert_eq!(pattern.chance, pattern2.chance);
+/// assert_eq!(pattern.priority, pattern2.priority);
+/// assert_eq!(pattern.before.rows(), pattern2.before.rows());
+/// assert_eq!(pattern.before.cols(), pattern2.before.cols());
+/// assert_eq!(pattern.after.rows(), pattern2.after.rows());
+/// assert_eq!(pattern.after.cols(), pattern2.after.cols());
+/// for (c1, c2) in pattern.before.iter().zip(pattern2.before.iter()) {
+///     assert_eq!(*c1, *c2);
+/// }
+/// for (c1, c2) in pattern.after.iter().zip(pattern2.after.iter()) {
+///     assert_eq!(*c1, *c2);
+/// }
+/// ```
+impl From<String> for Pattern {
+    fn from(value: String) -> Self {
+        let parts = value.split(";\n").collect::<Vec<&str>>();
+
+        Pattern {
+            chance: parts[0].parse().unwrap_or(1.),
+            priority: parts[1].parse().unwrap_or(0.),
+            before: {
+                let lines = parts[2].split('\n').collect::<Vec<&str>>();
+                grid::Grid::from_vec(
+                    lines
+                        .iter()
+                        .flat_map(|line| line.chars())
+                        .collect::<Vec<char>>(),
+                    lines[0].len(),
+                )
+            },
+            after: {
+                let lines = parts[3].split('\n').collect::<Vec<&str>>();
+                grid::Grid::from_vec(
+                    lines
+                        .iter()
+                        .flat_map(|line| line.chars())
+                        .collect::<Vec<char>>(),
+                    lines[0].len(),
+                )
+            },
+        }
+    }
+}
+
+/// Custom struct to allow the implementaion of [serde::Serialize] and [serde::Deserialize] on foreign type grid.
+/// As a grid can be constructed from ```data``` and ```columns``` alone, representing ```rows``` is not neccessary.
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "grid::Grid")]
+struct SerdeGrid<T> {
+    /// Representer for the data in a grid
+    #[serde(getter = "grid::Grid::flatten")]
+    data: Vec<T>,
+    /// Representer for the number of columns in a grid.
+    #[serde(getter = "grid::Grid::cols")]
+    cols: usize,
+}
+
+impl<T> From<SerdeGrid<T>> for grid::Grid<T> {
+    fn from(value: SerdeGrid<T>) -> Self {
+        grid::Grid::from_vec(value.data, value.cols)
     }
 }
 

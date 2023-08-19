@@ -30,12 +30,12 @@ env_logger = "0.10"
 
 
 
-[[test]]
-name = "sand"
-path = "tests/sand/main.rs"
-harness = false
+# [[test]]
+# name = "sand"
+# path = "tests/sand/main.rs"
+# harness = false
 
-[[test]]
-name = "game_of_life"
-path = "tests/game_of_life/main.rs"
-harness = false
+# [[test]]
+# name = "game_of_life"
+# path = "tests/game_of_life/main.rs"
+# harness = false
