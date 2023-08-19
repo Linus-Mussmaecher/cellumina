@@ -2,6 +2,7 @@ mod environment_rule;
 mod pattern_rule;
 
 use std::fmt::Debug;
+use std::fmt::Display;
 
 use super::CellGrid;
 pub use environment_rule::EnvironmentRule;
@@ -38,4 +39,23 @@ pub enum EdgeBehaviour {
     /// When trying to get a cell from outside the state space, return '_' to indicate a wall.
     /// PatternRules will not check subareas that leave the state space.
     Stop,
+}
+
+impl Display for EdgeBehaviour {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EdgeBehaviour::Wrap => write!(f, "Wrap"),
+            EdgeBehaviour::Stop => write!(f, "Stop"),
+        }
+    }
+}
+
+impl From<&str> for EdgeBehaviour {
+    fn from(value: &str) -> Self {
+        match value {
+            "Wrap" => Self::Wrap,
+            "Stop" => Self::Stop,
+            _ => Self::Stop,
+        }
+    }
 }

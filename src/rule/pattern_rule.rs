@@ -16,6 +16,30 @@ pub struct PatternRule {
     pub(crate) edge_behaviour: EdgeBehaviour,
 }
 
+impl Display for PatternRule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{};\n\n", self.edge_behaviour)?;
+        for pattern in self.patterns.iter() {
+            writeln!(f, "{}", pattern)?;
+        }
+        write!(f, "")
+    }
+}
+
+impl From<&str> for PatternRule {
+    fn from(value: &str) -> Self {
+        let mut vals = value.split(";\n\n");
+
+        PatternRule {
+            edge_behaviour: EdgeBehaviour::from(vals.next().unwrap()),
+            patterns: vals
+                .filter(|val| !val.is_empty())
+                .map(Pattern::from)
+                .collect(),
+        }
+    }
+}
+
 /// A pattern consists both of a grid of cells to search for and a grid of cells to replace it with.
 ///
 /// The ```before``` pattern may contain wildcards ```*``` to match any character.
@@ -50,6 +74,14 @@ pub struct PatternRule {
 /// rule.transform(&mut grid);
 /// assert_eq!(grid, grid::grid![[' ', ' '][' ', 'X']['X', ' ']]);
 /// rule.transform(&mut grid);
+/// assert_eq!(grid, grid::grid![[' ', ' '][' ', ' ']['X', 'X']]);
+///
+/// let rule2 = cellumina::rule::PatternRule::from(rule.to_string().as_str());
+///
+/// grid = grid::grid![[' ', 'X']['X', ' '][' ', ' ']];
+/// rule2.transform(&mut grid);
+/// assert_eq!(grid, grid::grid![[' ', ' '][' ', 'X']['X', ' ']]);
+/// rule2.transform(&mut grid);
 /// assert_eq!(grid, grid::grid![[' ', ' '][' ', ' ']['X', 'X']]);
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,7 +137,7 @@ impl Display for Pattern {
 ///             before: grid::grid![[' ', ' ', 'X'][' ', 'X', 'X']],
 ///             after: grid::grid![['*', '*', ' ']['X', '*', '*']],
 ///         };
-/// let pattern2 = cellumina::rule::Pattern::from(pattern.to_string());
+/// let pattern2 = cellumina::rule::Pattern::from(pattern.to_string().as_str());
 /// assert_eq!(pattern.chance, pattern2.chance);
 /// assert_eq!(pattern.priority, pattern2.priority);
 /// assert_eq!(pattern.before.rows(), pattern2.before.rows());
@@ -119,8 +151,8 @@ impl Display for Pattern {
 ///     assert_eq!(*c1, *c2);
 /// }
 /// ```
-impl From<String> for Pattern {
-    fn from(value: String) -> Self {
+impl From<&str> for Pattern {
+    fn from(value: &str) -> Self {
         let parts = value.split(";\n").collect::<Vec<&str>>();
 
         Pattern {
