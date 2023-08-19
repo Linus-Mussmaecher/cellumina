@@ -2,11 +2,12 @@ use super::{EdgeBehaviour, Rule};
 use crate::CellGrid;
 use rand::seq::SliceRandom;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use serde::{Deserialize, Serialize};
 
 /// A Pattern Rule works by looping over the current state and replacing every occurence of one or more certain patterns with another, equally sized pattern of characters.
 ///
 /// For more information about how [Pattern]s are processed, see [Pattern].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternRule {
     /// The replacment patterns of this rule.
     pub(crate) patterns: Vec<Pattern>,
@@ -50,16 +51,33 @@ pub struct PatternRule {
 /// rule.transform(&mut grid);
 /// assert_eq!(grid, grid::grid![[' ', ' '][' ', ' ']['X', 'X']]);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pattern {
     /// The chance for the pattern to apply on a match.
     pub chance: f32,
     /// The priority of this pattern over others.
     pub priority: f32,
     /// The cell pattern to search for.
+    #[serde(with = "SerdeGrid")]
     pub before: CellGrid,
     /// The cell pattern it should be replaced with.
+    #[serde(with = "SerdeGrid")]
     pub after: CellGrid,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "grid::Grid")]
+struct SerdeGrid<T> {
+    #[serde(getter = "grid::Grid::flatten")]
+    data: Vec<T>,
+    #[serde(getter = "grid::Grid::cols")]
+    cols: usize,
+}
+
+impl<T> From<SerdeGrid<T>> for grid::Grid<T> {
+    fn from(value: SerdeGrid<T>) -> Self {
+        grid::Grid::from_vec(value.data, value.cols)
+    }
 }
 
 impl Default for Pattern {

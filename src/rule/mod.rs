@@ -10,6 +10,8 @@ pub use pattern_rule::PatternRule;
 
 /// A rule describes a transition from one state of a cellular automaton to the next.
 pub trait Rule: Debug {
+    /// Transforms the passed cell grid according to this transformation rule.
+    /// Transformation happens in-place.
     fn transform(&self, grid: &mut CellGrid);
 }
 
@@ -28,7 +30,7 @@ impl Rule for MultiRule {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum EdgeBehaviour {
     #[default]
     /// When trying to get a cell from an index outside of the state space, wrap around
