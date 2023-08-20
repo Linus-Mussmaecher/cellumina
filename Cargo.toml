@@ -27,18 +27,3 @@ serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 env_logger = "0.10"
-
-
-[[test]]
-name = "to_str"
-path = "tests/to_string/main.rs"
-
-[[test]]
-name = "sand"
-path = "tests/sand/main.rs"
-harness = false
-
-[[test]]
-name = "game_of_life"
-path = "tests/game_of_life/main.rs"
-harness = false

@@ -9,7 +9,7 @@ pub struct Automaton {
     /// The current state of the automaton.
     pub(super) state: CellGrid,
     /// The rule set of the automaton.
-    pub(super) rules: Box<dyn rule::Rule>,
+    pub(super) rule: Box<dyn rule::Rule>,
     /// How often and on what conditions this automaton applies its rule set to its state to get to the next step.
     pub(super) step_mode: StepMode,
     /// The colors this automaton uses to convert itself to an image.
@@ -83,7 +83,7 @@ impl Automaton {
         std::mem::take(&mut self.manual_change)
             | match self.step_mode {
                 StepMode::Immediate => {
-                    self.rules.transform(&mut self.state);
+                    self.rule.transform(&mut self.state);
                     self.last_step = Some(time::Instant::now());
                     true
                 }
@@ -91,7 +91,7 @@ impl Automaton {
                     let step_permitted = self.last_step.unwrap().elapsed() >= interval;
                     if step_permitted {
                         let before = time::Instant::now();
-                        self.rules.transform(&mut self.state);
+                        self.rule.transform(&mut self.state);
                         self.last_step = Some(time::Instant::now());
                         println!("Time step performed in {}.", before.elapsed().as_secs_f32());
                     }
