@@ -4,6 +4,8 @@ fn main() {
     cellumina::AutomatonBuilder::new()
         // Use an image to supply the initial configuration.
         .from_image_file("./examples/game_of_life/gol_init3.png")
+        // This is a considerably larger image. Running this on debug mode might be slow.
+        //.from_image_file("./examples/game_of_life/gol_init3.png")
         // Alternative source: Load the the initial state from a .txt file.
         //.from_text_file("./examples/game_of_life/gol_init2.txt")
         // Describe the rule of Conway's Game Of Life.
@@ -37,7 +39,7 @@ fn main() {
             },
         })
         // Set a minimum time step.
-        .with_min_time_step(std::time::Duration::from_secs_f32(0.2))
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.1))
         // Set a display color for the live cells. This color needs to match the color of the live cells in our source image.
         .with_color('X', [95, 205, 228, 255])
         // Finish the build process.
