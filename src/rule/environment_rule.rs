@@ -53,22 +53,27 @@ use crate::CellGrid;
 #[derive(Clone, Copy)]
 pub struct EnvironmentRule {
     /// The vertical range of an environment, extending in both direction from the cell to be transformed.
-    /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
-    pub range_vert: usize,
+    ///
+    /// Your ```cell_transform``` function will receive a grid of height ```2 * row_range + 1```, centered on the cell that will be replaced by the output.
+    pub row_range: usize,
     /// The horizontal range of an environment, extending in both direction from the cell to be transformed.
-    /// Contract: (2 * rows + 1) * (2 * columns + 1)= S.
-    pub range_hor: usize,
+    ///
+    /// Your ```cell_transform``` function will receive a grid of width ```2 * col_range + 1```, centered on the cell that will be replaced by the output.
+    pub col_range: usize,
     /// How the rule is supposed to handle cells at the edges of the state space.
     pub edge_behaviour: super::EdgeBehaviour,
-    /// The environemnt rules. Need to be complete.
+    /// The function that calculates the next state of a single cell based on its environment.
+    ///
+    /// Receives a grid of size ```2 * row_range + 1``` x ```2 * col_range + 1```. Must return a character.
+    /// In the next iteration after applying this rule, the cell in the center of the received grid will contain the return value of this function.
     pub cell_transform: fn(&CellGrid) -> char,
 }
 
 impl Default for EnvironmentRule {
     fn default() -> Self {
         Self {
-            range_vert: Default::default(),
-            range_hor: Default::default(),
+            row_range: Default::default(),
+            col_range: Default::default(),
             edge_behaviour: Default::default(),
             cell_transform: |_| ' ',
         }
@@ -78,15 +83,15 @@ impl Default for EnvironmentRule {
 impl std::fmt::Debug for EnvironmentRule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EnvironmentRule")
-            .field("range_vert", &self.range_vert)
-            .field("range_hor", &self.range_hor)
+            .field("range_vert", &self.row_range)
+            .field("range_hor", &self.col_range)
             .finish()
     }
 }
 
 impl super::Rule for EnvironmentRule {
     fn transform(&self, grid: &mut CellGrid) {
-        let mut buffer = grid::Grid::new(2 * self.range_vert + 1, 2 * self.range_hor + 1);
+        let mut buffer = grid::Grid::new(2 * self.row_range + 1, 2 * self.col_range + 1);
         let (rows, cols) = grid.size();
 
         // correction factor to make sure no overflowing subtractions happen
@@ -95,22 +100,22 @@ impl super::Rule for EnvironmentRule {
 
         for row in 0..rows {
             for col in 0..cols {
-                for row_del in 0..=2 * self.range_vert {
-                    for col_del in 0..=2 * self.range_hor {
+                for row_del in 0..=2 * self.row_range {
+                    for col_del in 0..=2 * self.col_range {
                         // Fill the buffer with values from the grid
                         buffer[row_del][col_del] = grid
                             // try to get normally
                             .get(
-                                (row + row_del).wrapping_sub(self.range_vert),
-                                (col + col_del).wrapping_sub(self.range_hor),
+                                (row + row_del).wrapping_sub(self.row_range),
+                                (col + col_del).wrapping_sub(self.col_range),
                             )
                             .copied()
                             // if outside of grid, check edge behavior
                             .unwrap_or_else(|| match self.edge_behaviour {
                                 // Wrap: Do a modulus calculation to get from the other side of the grid
                                 super::EdgeBehaviour::Wrap => {
-                                    grid[(row + rows + row_del - self.range_vert) % rows]
-                                        [(col + cols + col_del - self.range_hor) % cols]
+                                    grid[(row + rows + row_del - self.row_range) % rows]
+                                        [(col + cols + col_del - self.col_range) % cols]
                                 }
                                 // Show: Show 'Outside Of Grid'-Cells as Underscore.
                                 super::EdgeBehaviour::Stop => '_',

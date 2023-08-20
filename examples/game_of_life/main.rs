@@ -9,8 +9,8 @@ fn main() {
         // Describe the rule of Conway's Game Of Life.
         .with_rule(cellumina::rule::EnvironmentRule {
             // Each cell only cares about neighbors 1 field away.
-            range_vert: 1,
-            range_hor: 1,
+            row_range: 1,
+            col_range: 1,
             edge_behaviour: cellumina::rule::EdgeBehaviour::Stop,
             cell_transform: |env| match env
             // Iterate over neighbors.
