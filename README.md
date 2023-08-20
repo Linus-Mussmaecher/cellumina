@@ -29,7 +29,7 @@ These rules can be added by creating these struct using normal Rust code.
 The Patter Replacement Rules can also (de-)serialized by using ```serde``` or loaded from (and saved to) a custom file type.
 This representation is more humanly readable than the serde version and can easily be created by hand if you do not want your rust files to contain large amounts of grid initializations for the patterns.
 
-Additionally, the public trait ```Rule``` can be overwritten to implement completely custom rules.
+Additionally, the public trait [```Rule```](https://docs.rs/cellumina/latest/cellumina/rule/trait.Rule.html) can be overwritten to implement completely custom rules.
 
 ### Live View
 
