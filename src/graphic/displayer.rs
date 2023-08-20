@@ -42,6 +42,8 @@ pub(super) struct AutomatonDisplayer {
     replacement_char: char,
     /// The keymap used to convert from VirtualKeyCode to character
     keymap: HashMap<winit::event::VirtualKeyCode, char>,
+    /// Wether the simulation is currently paused, so only drawn and not progressed.
+    paused: bool,
 
     /// The contained automaton representing a cell state to draw.
     cell_state: automaton::Automaton,
@@ -289,6 +291,7 @@ impl AutomatonDisplayer {
             hovered_cell: None,
             mouse_down: false,
             replacement_char: 'X',
+            paused: false,
             keymap: get_keymap(),
         }
     }
@@ -338,7 +341,7 @@ impl AutomatonDisplayer {
             }
         }
 
-        if self.cell_state.next_step() {
+        if (!self.paused && self.cell_state.next_step()) || (self.paused && self.mouse_down) {
             self.queue.write_texture(
                 // copy destination
                 wgpu::ImageCopyTextureBase {
@@ -381,6 +384,9 @@ impl AutomatonDisplayer {
             match virtual_keycode {
                 Some(winit::event::VirtualKeyCode::Space) => {
                     self.replacement_char = ' ';
+                }
+                Some(winit::event::VirtualKeyCode::Return) => {
+                    self.paused = !self.paused;
                 }
                 Some(code) => {
                     self.replacement_char = self.keymap.get(code).copied().unwrap_or(' ');
