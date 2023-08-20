@@ -27,7 +27,7 @@ fn main() {
 
     // Rules can be converted to strings.
     // The rule can be recreated from the display output.
-    let rule2 = cellumina::rule::PatternRule::from(rule.to_string().as_str());
+    let _rule2 = cellumina::rule::PatternRule::from(rule.to_string().as_str());
 
     // Therefore, you can save this output to a file and reload the rule later (or even type such a file yourself so the rule and patterns do not need to be created in code.)
 
@@ -35,7 +35,7 @@ fn main() {
 
     std::fs::write(path, rule.to_string()).expect("Could not write to file!");
 
-    let rule3 = cellumina::rule::PatternRule::from(
+    let _rule3 = cellumina::rule::PatternRule::from(
         std::fs::read_to_string(path)
             .expect("Could not read file!")
             .as_str(),
