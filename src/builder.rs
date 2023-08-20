@@ -224,7 +224,7 @@ impl AutomatonBuilder {
                         .into_rgba8(),
                 ),
             },
-            rules: {
+            rule: {
                 if !self.pattern_rule.patterns.is_empty() {
                     self.rules.push(Box::new(self.pattern_rule));
                 }

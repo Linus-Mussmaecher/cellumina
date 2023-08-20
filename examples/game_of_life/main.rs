@@ -3,9 +3,9 @@ fn main() {
     // Create a new Cellular Automaton using the builder.
     cellumina::AutomatonBuilder::new()
         // Use an image to supply the initial configuration.
-        .from_image_file("./tests/game_of_life/gol_init3.png")
+        .from_image_file("./examples/game_of_life/gol_init3.png")
         // Alternative source: Load the the initial state from a .txt file.
-        //.from_text_file("./tests/game_of_life/gol_init2.txt")
+        //.from_text_file("./examples/game_of_life/gol_init2.txt")
         // Describe the rule of Conway's Game Of Life.
         .with_rule(cellumina::rule::EnvironmentRule {
             // Each cell only cares about neighbors 1 field away.
