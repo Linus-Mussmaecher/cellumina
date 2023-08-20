@@ -35,6 +35,14 @@ fn main() {
 
     std::fs::write(path, rule.to_string()).expect("Could not write to file!");
 
+    // Can also be converted to a file via serde:
+
+    std::fs::write(
+        "./examples/to_string/basic_rule_serde.toml",
+        toml::to_string(&rule).expect("Could not convert to TOML string."),
+    )
+    .expect("Could not write to file!");
+
     let _rule3 = cellumina::rule::PatternRule::from(
         std::fs::read_to_string(path)
             .expect("Could not read file!")

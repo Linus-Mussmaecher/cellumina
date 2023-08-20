@@ -1,0 +1,37 @@
+edge_behaviour = "Wrap"
+
+[[patterns]]
+chance = 1.0
+priority = 1.0
+
+[patterns.before]
+data = ["X", " "]
+cols = 1
+
+[patterns.after]
+data = [" ", "X"]
+cols = 1
+
+[[patterns]]
+chance = 0.800000011920929
+priority = 0.5
+
+[patterns.before]
+data = ["X", " ", "X", " "]
+cols = 2
+
+[patterns.after]
+data = [" ", " ", "X", "X"]
+cols = 2
+
+[[patterns]]
+chance = 0.800000011920929
+priority = 0.5
+
+[patterns.before]
+data = [" ", "X", " ", "X"]
+cols = 2
+
+[patterns.after]
+data = [" ", " ", "X", "X"]
+cols = 2
