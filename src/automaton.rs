@@ -16,8 +16,6 @@ pub struct Automaton {
     pub(super) colors: HashMap<char, [u8; 4]>,
     /// The time at which the automaton was created or the last step was performed.
     pub(super) last_step: Option<time::Instant>,
-    /// Wether a manual state change was performed between the current stept and the previous one.
-    pub(super) manual_change: bool,
 }
 
 /// Describes how often an [Automaton] executes its time step.
@@ -55,7 +53,7 @@ impl Automaton {
     /// Sets the cell at the specified indices to the specified character.
     /// ## Error
     /// When the given index is out of bounds.
-    pub fn set_cell(&mut self, row: u32, col: u32, new_val: char) -> Result<(), CelluminaError> {
+    pub fn set_cell(&mut self, row: u32, col: u32, new_val: char) -> Result<bool, CelluminaError> {
         if row >= self.state.size().0 as u32 || col >= self.state.size().1 as u32 {
             Err(CelluminaError::IndexOutOfBoundsError(
                 row,
@@ -64,9 +62,9 @@ impl Automaton {
                 self.state.size().1 as u32,
             ))
         } else {
-            self.manual_change = self.state[row as usize][col as usize] != new_val;
+            let res = self.state[row as usize][col as usize] != new_val;
             self.state[row as usize][col as usize] = new_val;
-            Ok(())
+            Ok(res)
         }
     }
 
@@ -80,24 +78,23 @@ impl Automaton {
             self.last_step = Some(time::Instant::now());
         }
         // set manual change to false, then return its previous state and OR it with the result of the transformation
-        std::mem::take(&mut self.manual_change)
-            | match self.step_mode {
-                StepMode::Immediate => {
+        match self.step_mode {
+            StepMode::Immediate => {
+                self.rule.transform(&mut self.state);
+                self.last_step = Some(time::Instant::now());
+                true
+            }
+            StepMode::Limited { interval } => {
+                let step_permitted = self.last_step.unwrap().elapsed() >= interval;
+                if step_permitted {
+                    let before = time::Instant::now();
                     self.rule.transform(&mut self.state);
                     self.last_step = Some(time::Instant::now());
-                    true
+                    println!("Time step performed in {}.", before.elapsed().as_secs_f32());
                 }
-                StepMode::Limited { interval } => {
-                    let step_permitted = self.last_step.unwrap().elapsed() >= interval;
-                    if step_permitted {
-                        let before = time::Instant::now();
-                        self.rule.transform(&mut self.state);
-                        self.last_step = Some(time::Instant::now());
-                        println!("Time step performed in {}.", before.elapsed().as_secs_f32());
-                    }
-                    step_permitted
-                }
+                step_permitted
             }
+        }
     }
 
     /// Runs this automaton and displays it in a window.
