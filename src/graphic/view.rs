@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use wgpu::util::DeviceExt;
 
 use winit::{
@@ -15,7 +13,11 @@ use crate::automaton;
 
 /// A struct that holds an automaton and a lot of WebGL-State and can run and display that automaton.
 #[derive(Debug)]
-pub(super) struct AutomatonDisplayer {
+pub(super) struct AutomatonView {
+    // ----- MODEL -----
+    model: super::AutomatonModel,
+
+    // ----- VIEW -----
     /// The WebGL Surface.
     surface: wgpu::Surface,
     /// The WebGL Device.
@@ -34,28 +36,12 @@ pub(super) struct AutomatonDisplayer {
     /// The current index buffer (should not change, as we always draw a rectangle).
     index_buffer: wgpu::Buffer,
 
-    /// The cell the user's mouse is currently hovering.
-    hovered_cell: Option<(u32, u32)>,
-    /// The current state of the main mouse button.
-    mouse_down: bool,
-    /// The current state of the Ctrl-Key
-    ctrl_down: bool,
-    /// The char the currently hovered cell is replaced with on mouse click.
-    replacement_char: char,
-    /// The keymap used to convert from VirtualKeyCode to character
-    keymap: HashMap<winit::event::VirtualKeyCode, char>,
-    /// Wether the simulation is currently paused, so only drawn and not progressed.
-    paused: bool,
-
-    /// The contained automaton representing a cell state to draw.
-    cell_state: automaton::Automaton,
-    /// The current texture updated to the state of the automaton.
-    cell_state_texture: wgpu::Texture,
-    /// The bind group used to draw the automaton's cells to the image.
-    cell_state_bind_group: wgpu::BindGroup,
+    // ----- CONTROLLER -----
+    /// The AutomatonModifier that deals with user interaction with the cell state.
+    modifier: super::AutomatonController,
 }
 
-impl AutomatonDisplayer {
+impl AutomatonView {
     /// Creates a new AutomatonDisplayer to draw the passed automaton to the passed window.
     async fn new(window: Window, automaton: automaton::Automaton) -> Self {
         // +-------------------------------------------------------------+
@@ -129,85 +115,8 @@ impl AutomatonDisplayer {
         // |                                                             |
         // +-------------------------------------------------------------+
 
-        let cell_state_texture = device.create_texture(&wgpu::TextureDescriptor {
-            // the size of the texture
-            size: wgpu::Extent3d {
-                width: automaton.dimensions().1,
-                height: automaton.dimensions().0,
-                // ??
-                depth_or_array_layers: 1,
-            },
-            // ??
-            mip_level_count: 1,
-            // For displaying, will only be samples once?
-            sample_count: 1,
-            // not a 3D-object
-            dimension: wgpu::TextureDimension::D2,
-            // we converted to rgba8 above
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
-            // TEXTURE_BINDING = use in shaders, COPY_DST: data will be copied here
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            label: Some("diffuse texture"),
-            // might want to support additional view formats
-            view_formats: &[],
-        });
+        let (model, cell_state_bind_group_layout) = super::AutomatonModel::new(automaton, &device);
 
-        let cell_state_texture_view = cell_state_texture.create_view(&Default::default());
-        let cell_state_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            // what to do with coordinates outside the texture
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            // what to do when multiple pixels draw from one texture pixel
-            mag_filter: wgpu::FilterMode::Nearest,
-            // what to do when multiple texture pixels fit on one actual pixel
-            min_filter: wgpu::FilterMode::Nearest,
-            // whatever a mipmap is
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            ..Default::default()
-        });
-
-        let cell_state_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Texture Bind Group Layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        // what shaders this is used in
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            // ??
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            // 2D
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            // wether to use multiple samples
-                            multisampled: false,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-            });
-
-        let cell_state_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Texture Bind Group"),
-            layout: &cell_state_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&cell_state_texture_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&cell_state_sampler),
-                },
-            ],
-        });
         // +-------------------------------------------------------------+
         // |                                                             |
         // |         Creating shader, render pipeline and buffers        |
@@ -279,6 +188,9 @@ impl AutomatonDisplayer {
         });
 
         Self {
+            // Model
+            model,
+            // View
             surface,
             device,
             queue,
@@ -287,15 +199,8 @@ impl AutomatonDisplayer {
             render_pipeline,
             vertex_buffer,
             index_buffer,
-            cell_state: automaton,
-            cell_state_texture,
-            cell_state_bind_group,
-            hovered_cell: None,
-            mouse_down: false,
-            ctrl_down: false,
-            replacement_char: 'X',
-            paused: false,
-            keymap: get_keymap(),
+            // Controller
+            modifier: super::AutomatonController::new(),
         }
     }
 
@@ -310,8 +215,8 @@ impl AutomatonDisplayer {
         // get new vertex positions to keep ratio of display consistent
         let mut vertices = vertex::VERTICES;
         // Calculate ratios
-        let cell_ratio =
-            self.cell_state.dimensions().1 as f32 / self.cell_state.dimensions().0 as f32;
+        let cell_ratio = self.model.cell_state.dimensions().1 as f32
+            / self.model.cell_state.dimensions().0 as f32;
         let win_ratio = new_size.width as f32 / new_size.height as f32;
 
         // Based on the larger ratio, make the rectangle thinner or lower.
@@ -332,133 +237,34 @@ impl AutomatonDisplayer {
 
     /// Attempts to update the automaton, and if an update has happened writes its state to the buffers.
     fn update(&mut self) {
-        if self.mouse_down {
-            if let Some((row, col)) = self.hovered_cell {
-                if self
-                    .cell_state
-                    .set_cell(row, col, self.replacement_char)
-                    .is_err()
-                {
-                    log::error!("Could not set cell state.");
-                }
-            }
-        }
-
-        if (!self.paused && self.cell_state.next_step()) || (self.paused && self.mouse_down) {
+        if self.modifier.modify(&mut self.model)
+            | (!self.model.paused && self.model.cell_state.next_step())
+        {
             self.queue.write_texture(
                 // copy destination
                 wgpu::ImageCopyTextureBase {
-                    texture: &self.cell_state_texture,
+                    texture: &self.model.cell_state_texture,
                     mip_level: 0,
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
                 },
                 // actual pixel data
-                &self.cell_state.create_image_buffer(),
+                &self.model.cell_state.create_image_buffer(),
                 // internal layout
                 wgpu::ImageDataLayout {
                     offset: 0,
-                    bytes_per_row: Some(4 * self.cell_state.dimensions().1),
-                    rows_per_image: Some(self.cell_state.dimensions().0),
+                    bytes_per_row: Some(4 * self.model.cell_state.dimensions().1),
+                    rows_per_image: Some(self.model.cell_state.dimensions().0),
                 },
                 // size as above
                 wgpu::Extent3d {
-                    width: self.cell_state.dimensions().1,
-                    height: self.cell_state.dimensions().0,
+                    width: self.model.cell_state.dimensions().1,
+                    height: self.model.cell_state.dimensions().0,
                     // ??
                     depth_or_array_layers: 1,
                 },
             );
         }
-    }
-
-    /// Handles input events from the user. Returns wether any input has occured.
-    fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
-        if let winit::event::WindowEvent::KeyboardInput {
-            input:
-                winit::event::KeyboardInput {
-                    virtual_keycode,
-                    state: winit::event::ElementState::Pressed,
-                    ..
-                },
-            ..
-        } = event
-        {
-            match virtual_keycode {
-                Some(winit::event::VirtualKeyCode::Space) => {
-                    self.replacement_char = ' ';
-                }
-                Some(winit::event::VirtualKeyCode::Return) => {
-                    self.paused = !self.paused;
-                }
-                Some(winit::event::VirtualKeyCode::S) if self.ctrl_down => {
-                    let (rows, cols) = self.cell_state.state.size();
-                    std::fs::write(
-                        "./cellumina_output.txt",
-                        self.cell_state.state.iter().fold(
-                            String::with_capacity((cols + 1) * rows),
-                            |mut container, &cell| {
-                                if container.len() % (cols + 1) == cols {
-                                    container.push('\n');
-                                }
-                                container.push(cell);
-                                container
-                            },
-                        ),
-                    )
-                    .expect("Could not write file.");
-                }
-                Some(code) => {
-                    self.replacement_char = self.keymap.get(code).copied().unwrap_or(' ');
-                }
-                None => {}
-            }
-        }
-
-        if let winit::event::WindowEvent::ModifiersChanged(state) = event {
-            self.ctrl_down = state.ctrl();
-        }
-
-        // if the cursor moves, calculate the cell it is hovering over, if any
-        if let winit::event::WindowEvent::CursorMoved { position, .. } = event {
-            // calculate the height and width of a cell if the state was stretched to the whole window
-            let pixels_per_col = self.config.width as f64 / self.cell_state.dimensions().1 as f64; // pixels per cell
-            let pixels_per_row = self.config.height as f64 / self.cell_state.dimensions().0 as f64; // pixels per cell
-
-            // since the state is only stretched until either direction reaches the window borders, the true side length of a cell is the minimum
-            let pixels_per_cell = pixels_per_col.min(pixels_per_row);
-
-            let (cell_row, cell_col) = (
-                ((position.y - self.config.height as f64 / 2.) / pixels_per_cell
-                    + self.cell_state.dimensions().0 as f64 / 2.),
-                ((position.x - self.config.width as f64 / 2.) / pixels_per_cell
-                    + self.cell_state.dimensions().1 as f64 / 2.),
-            );
-
-            if 0. <= cell_col
-                && cell_col < self.cell_state.dimensions().1 as f64
-                && 0. <= cell_row
-                && cell_row < self.cell_state.dimensions().0 as f64
-            {
-                self.hovered_cell = Some((cell_row as u32, cell_col as u32));
-            } else {
-                self.hovered_cell = None
-            }
-        }
-
-        if let winit::event::WindowEvent::MouseInput {
-            state,
-            button: winit::event::MouseButton::Left,
-            ..
-        } = event
-        {
-            match state {
-                ElementState::Pressed => self.mouse_down = true,
-                ElementState::Released => self.mouse_down = false,
-            }
-        }
-
-        false
     }
 
     /// Handles all sorts of window events.
@@ -554,7 +360,7 @@ impl AutomatonDisplayer {
 
             render_pass.set_pipeline(&self.render_pipeline);
             //render_pass.set_bind_group(0, &self.info_bind_group, &[]);
-            render_pass.set_bind_group(0, &self.cell_state_bind_group, &[]);
+            render_pass.set_bind_group(0, &self.model.cell_state_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             //render_pass.draw(0..3, 0..1);
@@ -591,7 +397,7 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
         .build(&event_loop)
         .expect("Could not init window.");
 
-    let mut displayer = AutomatonDisplayer::new(window, automaton).await;
+    let mut view = AutomatonView::new(window, automaton).await;
 
     event_loop.run(move |event, _event_loop_window_target, control_flow| {
         match event {
@@ -599,22 +405,24 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
             Event::WindowEvent {
                 ref event,
                 window_id,
-            } if window_id == displayer.window.id() => {
+            } if window_id == view.window.id() => {
                 // first try to handle by the drawing state
-                if !displayer.input(event) {
+                if !view
+                    .modifier
+                    .handle_event(&mut view.model, &view.config, event)
+                {
                     // then handle events concerning the actual window
-                    displayer.window_events(control_flow, event);
+                    view.window_events(control_flow, event);
                 }
             }
-            Event::RedrawRequested(window_id) if window_id == displayer.window.id() => {
-                displayer.update();
-                match displayer.render() {
+            Event::RedrawRequested(window_id) if window_id == view.window.id() => {
+                view.update();
+                match view.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if lost
-                    Err(wgpu::SurfaceError::Lost) => displayer.resize(PhysicalSize::new(
-                        displayer.config.width,
-                        displayer.config.height,
-                    )),
+                    Err(wgpu::SurfaceError::Lost) => {
+                        view.resize(PhysicalSize::new(view.config.width, view.config.height))
+                    }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     // All other errors (Outdated, Timeout) should be resolved by the next frame
@@ -624,40 +432,9 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
             Event::MainEventsCleared => {
                 // RedrawRequested will only trigger once, unless we manually
                 // request it.
-                displayer.window.request_redraw();
+                view.window.request_redraw();
             }
             _ => {}
         }
     });
-}
-
-fn get_keymap() -> HashMap<winit::event::VirtualKeyCode, char> {
-    HashMap::from([
-        (winit::event::VirtualKeyCode::A, 'A'),
-        (winit::event::VirtualKeyCode::B, 'B'),
-        (winit::event::VirtualKeyCode::C, 'C'),
-        (winit::event::VirtualKeyCode::D, 'D'),
-        (winit::event::VirtualKeyCode::E, 'E'),
-        (winit::event::VirtualKeyCode::F, 'F'),
-        (winit::event::VirtualKeyCode::G, 'G'),
-        (winit::event::VirtualKeyCode::H, 'H'),
-        (winit::event::VirtualKeyCode::I, 'I'),
-        (winit::event::VirtualKeyCode::J, 'J'),
-        (winit::event::VirtualKeyCode::K, 'K'),
-        (winit::event::VirtualKeyCode::L, 'L'),
-        (winit::event::VirtualKeyCode::M, 'M'),
-        (winit::event::VirtualKeyCode::N, 'N'),
-        (winit::event::VirtualKeyCode::O, 'O'),
-        (winit::event::VirtualKeyCode::P, 'P'),
-        (winit::event::VirtualKeyCode::Q, 'Q'),
-        (winit::event::VirtualKeyCode::R, 'R'),
-        (winit::event::VirtualKeyCode::S, 'S'),
-        (winit::event::VirtualKeyCode::T, 'T'),
-        (winit::event::VirtualKeyCode::U, 'U'),
-        (winit::event::VirtualKeyCode::V, 'V'),
-        (winit::event::VirtualKeyCode::W, 'W'),
-        (winit::event::VirtualKeyCode::X, 'X'),
-        (winit::event::VirtualKeyCode::Y, 'Y'),
-        (winit::event::VirtualKeyCode::Z, 'Z'),
-    ])
 }
