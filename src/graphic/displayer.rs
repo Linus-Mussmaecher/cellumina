@@ -38,6 +38,8 @@ pub(super) struct AutomatonDisplayer {
     hovered_cell: Option<(u32, u32)>,
     /// The current state of the main mouse button.
     mouse_down: bool,
+    /// The current state of the Ctrl-Key
+    ctrl_down: bool,
     /// The char the currently hovered cell is replaced with on mouse click.
     replacement_char: char,
     /// The keymap used to convert from VirtualKeyCode to character
@@ -290,6 +292,7 @@ impl AutomatonDisplayer {
             cell_state_bind_group,
             hovered_cell: None,
             mouse_down: false,
+            ctrl_down: false,
             replacement_char: 'X',
             paused: false,
             keymap: get_keymap(),
@@ -388,11 +391,32 @@ impl AutomatonDisplayer {
                 Some(winit::event::VirtualKeyCode::Return) => {
                     self.paused = !self.paused;
                 }
+                Some(winit::event::VirtualKeyCode::S) if self.ctrl_down => {
+                    let (rows, cols) = self.cell_state.state.size();
+                    std::fs::write(
+                        "./cellumina_output.txt",
+                        self.cell_state.state.iter().fold(
+                            String::with_capacity((cols + 1) * rows),
+                            |mut container, &cell| {
+                                if container.len() % (cols + 1) == cols {
+                                    container.push('\n');
+                                }
+                                container.push(cell);
+                                container
+                            },
+                        ),
+                    )
+                    .expect("Could not write file.");
+                }
                 Some(code) => {
                     self.replacement_char = self.keymap.get(code).copied().unwrap_or(' ');
                 }
                 None => {}
             }
+        }
+
+        if let winit::event::WindowEvent::ModifiersChanged(state) = event {
+            self.ctrl_down = state.ctrl();
         }
 
         // if the cursor moves, calculate the cell it is hovering over, if any
