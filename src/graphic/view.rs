@@ -1,12 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use winit::{
-    dpi::PhysicalSize,
-    event::*,
-    event_loop::{ControlFlow, EventLoop},
-    window::Window,
-    window::WindowBuilder,
-};
+use winit::{event::*, event_loop::ControlFlow, window::Window};
 
 use super::vertex;
 use crate::automaton;
@@ -14,20 +8,17 @@ use crate::automaton;
 /// A struct that holds an automaton and a lot of WebGL-State and can run and display that automaton.
 #[derive(Debug)]
 pub(super) struct AutomatonView {
-    // ----- MODEL -----
-    model: super::AutomatonModel,
-
     // ----- VIEW -----
     /// The WebGL Surface.
     surface: wgpu::Surface,
     /// The WebGL Device.
     device: wgpu::Device,
     /// The WebGL Queue.
-    queue: wgpu::Queue,
+    pub(super) queue: wgpu::Queue,
     /// The WebGL Config.
-    config: wgpu::SurfaceConfiguration,
+    pub(super) config: wgpu::SurfaceConfiguration,
     /// The winit-window being drawn to.
-    window: Window,
+    pub(super) window: Window,
     /// The WebGL Render Pipeline.
     render_pipeline: wgpu::RenderPipeline,
 
@@ -35,15 +26,16 @@ pub(super) struct AutomatonView {
     vertex_buffer: wgpu::Buffer,
     /// The current index buffer (should not change, as we always draw a rectangle).
     index_buffer: wgpu::Buffer,
-
-    // ----- CONTROLLER -----
-    /// The AutomatonModifier that deals with user interaction with the cell state.
-    modifier: super::AutomatonController,
+    /// The bind group used to draw the automaton's cells to the image.
+    cell_state_bind_group: wgpu::BindGroup,
 }
 
 impl AutomatonView {
     /// Creates a new AutomatonDisplayer to draw the passed automaton to the passed window.
-    async fn new(window: Window, automaton: automaton::Automaton) -> Self {
+    pub(super) async fn new(
+        window: Window,
+        automaton: automaton::Automaton,
+    ) -> (Self, super::AutomatonModel) {
         // +-------------------------------------------------------------+
         // |                                                             |
         // |                   GENERAL SETUP                             |
@@ -115,7 +107,8 @@ impl AutomatonView {
         // |                                                             |
         // +-------------------------------------------------------------+
 
-        let (model, cell_state_bind_group_layout) = super::AutomatonModel::new(automaton, &device);
+        let (model, cell_state_bind_group_layout, cell_state_bind_group) =
+            super::AutomatonModel::new(automaton, &device);
 
         // +-------------------------------------------------------------+
         // |                                                             |
@@ -187,26 +180,29 @@ impl AutomatonView {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        Self {
-            // Model
+        (
+            Self {
+                surface,
+                device,
+                queue,
+                config,
+                window,
+                render_pipeline,
+                vertex_buffer,
+                index_buffer,
+                cell_state_bind_group,
+            },
             model,
-            // View
-            surface,
-            device,
-            queue,
-            config,
-            window,
-            render_pipeline,
-            vertex_buffer,
-            index_buffer,
-            // Controller
-            modifier: super::AutomatonController::new(),
-        }
+        )
     }
 
     /// Sets the physical window size whereever needed and also calculates the maximum rectangle with the same side length ratio as the contained automaton
     /// still containable in this window and sets the vertex positions of the vertex buffer to the corners of that rectangle.
-    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    pub(super) fn resize(
+        &mut self,
+        new_size: winit::dpi::PhysicalSize<u32>,
+        model_dimensions: (u32, u32),
+    ) {
         // update a lot of stuff
         self.config.width = new_size.width;
         self.config.height = new_size.height;
@@ -215,8 +211,7 @@ impl AutomatonView {
         // get new vertex positions to keep ratio of display consistent
         let mut vertices = vertex::VERTICES;
         // Calculate ratios
-        let cell_ratio = self.model.cell_state.dimensions().1 as f32
-            / self.model.cell_state.dimensions().0 as f32;
+        let cell_ratio = model_dimensions.1 as f32 / model_dimensions.0 as f32;
         let win_ratio = new_size.width as f32 / new_size.height as f32;
 
         // Based on the larger ratio, make the rectangle thinner or lower.
@@ -235,40 +230,13 @@ impl AutomatonView {
             .write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
     }
 
-    /// Attempts to update the automaton, and if an update has happened writes its state to the buffers.
-    fn update(&mut self) {
-        if self.modifier.modify(&mut self.model)
-            | (!self.model.paused && self.model.cell_state.next_step())
-        {
-            self.queue.write_texture(
-                // copy destination
-                wgpu::ImageCopyTextureBase {
-                    texture: &self.model.cell_state_texture,
-                    mip_level: 0,
-                    origin: wgpu::Origin3d::ZERO,
-                    aspect: wgpu::TextureAspect::All,
-                },
-                // actual pixel data
-                &self.model.cell_state.create_image_buffer(),
-                // internal layout
-                wgpu::ImageDataLayout {
-                    offset: 0,
-                    bytes_per_row: Some(4 * self.model.cell_state.dimensions().1),
-                    rows_per_image: Some(self.model.cell_state.dimensions().0),
-                },
-                // size as above
-                wgpu::Extent3d {
-                    width: self.model.cell_state.dimensions().1,
-                    height: self.model.cell_state.dimensions().0,
-                    // ??
-                    depth_or_array_layers: 1,
-                },
-            );
-        }
-    }
-
     /// Handles all sorts of window events.
-    fn window_events(&mut self, control_flow: &mut ControlFlow, event: &WindowEvent<'_>) {
+    pub(super) fn window_events(
+        &mut self,
+        control_flow: &mut ControlFlow,
+        event: &WindowEvent<'_>,
+        model_dimensions: (u32, u32),
+    ) {
         match event {
             // close requested => close
             WindowEvent::CloseRequested => {
@@ -276,12 +244,12 @@ impl AutomatonView {
             }
             // resize requested => resize
             WindowEvent::Resized(physical_size) => {
-                self.resize(*physical_size);
+                self.resize(*physical_size, model_dimensions);
             }
             // different kind of resize requested => still resize
             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                 // new_inner_size is &&mut so we have to dereference it twice
-                self.resize(**new_inner_size);
+                self.resize(**new_inner_size, model_dimensions);
             }
             // handle all sorts of keyboard input
             // F11 => Switch fullscreen
@@ -319,7 +287,7 @@ impl AutomatonView {
     }
 
     /// Renders the currently stored automaton state to the window.
-    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub(super) fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         // get the current 'framebuffer'
         let output = self.surface.get_current_texture()?;
         // create a 'view' = definition how render code interacts with this texture
@@ -360,7 +328,7 @@ impl AutomatonView {
 
             render_pass.set_pipeline(&self.render_pipeline);
             //render_pass.set_bind_group(0, &self.info_bind_group, &[]);
-            render_pass.set_bind_group(0, &self.model.cell_state_bind_group, &[]);
+            render_pass.set_bind_group(0, &self.cell_state_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             //render_pass.draw(0..3, 0..1);
@@ -380,61 +348,4 @@ impl AutomatonView {
 
         Ok(())
     }
-}
-
-/// Creates an [AutomatonDisplayer] for the passed [automaton::Automaton], creates a window
-pub(crate) async fn run_live(automaton: automaton::Automaton) {
-    let event_loop = EventLoop::new();
-
-    let window = WindowBuilder::new()
-        .with_inner_size(winit::dpi::Size::Physical(winit::dpi::PhysicalSize {
-            width: 630,
-            height: 500,
-        }))
-        // for now
-        .with_resizable(true)
-        .with_title("Cellumina")
-        .build(&event_loop)
-        .expect("Could not init window.");
-
-    let mut view = AutomatonView::new(window, automaton).await;
-
-    event_loop.run(move |event, _event_loop_window_target, control_flow| {
-        match event {
-            // Window events
-            Event::WindowEvent {
-                ref event,
-                window_id,
-            } if window_id == view.window.id() => {
-                // first try to handle by the drawing state
-                if !view
-                    .modifier
-                    .handle_event(&mut view.model, &view.config, event)
-                {
-                    // then handle events concerning the actual window
-                    view.window_events(control_flow, event);
-                }
-            }
-            Event::RedrawRequested(window_id) if window_id == view.window.id() => {
-                view.update();
-                match view.render() {
-                    Ok(_) => {}
-                    // Reconfigure the surface if lost
-                    Err(wgpu::SurfaceError::Lost) => {
-                        view.resize(PhysicalSize::new(view.config.width, view.config.height))
-                    }
-                    // The system is out of memory, we should probably quit
-                    Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                    // All other errors (Outdated, Timeout) should be resolved by the next frame
-                    Err(e) => log::error!("{:?}", e),
-                }
-            }
-            Event::MainEventsCleared => {
-                // RedrawRequested will only trigger once, unless we manually
-                // request it.
-                view.window.request_redraw();
-            }
-            _ => {}
-        }
-    });
 }
