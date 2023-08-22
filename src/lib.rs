@@ -56,8 +56,8 @@
 //!
 //! The [examples folder](https://github.com/Linus-Mussmaecher/cellumina/tree/master/examples) contains the following examples:
 //!
-//!  * ```sand```: An implementation of conways game of life using environment rules.
-//!  * ```game_of_life```: A small falling sand simulation using pattern replacement rules to simulate falling sand, fire and ash.
+//!  * ```game_of_life```: An implementation of conways game of life using environment rules.
+//!  * ```sand```: A small falling sand simulation using pattern replacement rules to simulate falling sand, fire and ash.
 //!  * ```to_string```: An example that shows how to convert rules to and from the different string/file types.
 //!
 //!  All examples can be run by cloning this repository with
