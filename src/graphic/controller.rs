@@ -1,3 +1,4 @@
+/// A part of the MVC pattern, describing the state of various input devices of a live-run automaton.
 #[derive(Debug, Clone)]
 pub(super) struct AutomatonController {
     /// The cell the user's mouse is currently hovering.
@@ -13,6 +14,7 @@ pub(super) struct AutomatonController {
 }
 
 impl AutomatonController {
+    /// Creates a new AutomatonController with default state.
     pub fn new() -> Self {
         Self {
             hovered_cell: None,
@@ -23,6 +25,7 @@ impl AutomatonController {
         }
     }
 
+    /// Modifies the passed model as orderd by the user input.
     pub(crate) fn modify(&self, model: &mut super::AutomatonModel) -> bool {
         if self.mouse_down {
             if let Some((row, col)) = self.hovered_cell {
@@ -38,6 +41,7 @@ impl AutomatonController {
         false
     }
 
+    /// Handles a window event to update input state. If the event is not used, false is returned.
     pub(crate) fn handle_event(
         &mut self,
         model: &mut super::AutomatonModel,
@@ -140,6 +144,7 @@ impl AutomatonController {
     }
 }
 
+/// Returns a basic keymap mapping VirtualKeyCodes to chars.
 fn get_keymap() -> std::collections::HashMap<winit::event::VirtualKeyCode, char> {
     std::collections::HashMap::from([
         (winit::event::VirtualKeyCode::Space, ' '),

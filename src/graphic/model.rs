@@ -1,5 +1,6 @@
 use crate::automaton;
 
+/// A part of the MVC pattern, describing the underlying model/data of a live-run automaton.
 #[derive(Debug)]
 pub(super) struct AutomatonModel {
     /// The contained automaton representing a cell state to draw.
@@ -11,7 +12,20 @@ pub(super) struct AutomatonModel {
 }
 
 impl AutomatonModel {
-    pub fn new(
+    #[allow(dead_code)]
+    /// Creates a new AutomatonView to draw the passed automaton to the passed window.
+    /// Mirrors [[AutomatonView::create_view_model]]
+    pub(super) async fn create_view_model(
+        window: winit::window::Window,
+        automaton: automaton::Automaton,
+    ) -> (super::AutomatonView, Self) {
+        super::AutomatonView::create_view_model(window, automaton).await
+    }
+
+    /// Creates a new AutomatonModel.
+    ///
+    /// Supposed to be used as part of creating an [[AutomatonView]], receiving its device and returning appropriate bind groups.
+    pub(super) fn new(
         cell_state: automaton::Automaton,
         device: &wgpu::Device,
     ) -> (Self, wgpu::BindGroupLayout, wgpu::BindGroup) {
@@ -106,6 +120,8 @@ impl AutomatonModel {
         )
     }
 
+    /// Turns the cell state of this model's automaton to a texture and writes it to the queue of the passed view.
+    /// This queue must be the one created by the shared creater of Model and View.
     pub(super) fn write_texture(&self, queue: &mut wgpu::Queue) {
         queue.write_texture(
             // copy destination
@@ -133,6 +149,7 @@ impl AutomatonModel {
         );
     }
 
+    /// Attempts to perform a time step of the underlying cell state. Returns wether a time step was performed.
     pub(super) fn update(&mut self) -> bool {
         !self.paused && self.cell_state.next_step()
     }

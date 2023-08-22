@@ -5,7 +5,7 @@ use winit::{event::*, event_loop::ControlFlow, window::Window};
 use super::vertex;
 use crate::automaton;
 
-/// A struct that holds an automaton and a lot of WebGL-State and can run and display that automaton.
+/// A part of the MVC pattern, describing the OpenGL state and windoww of the view of a live-run automaton.
 #[derive(Debug)]
 pub(super) struct AutomatonView {
     // ----- VIEW -----
@@ -32,7 +32,7 @@ pub(super) struct AutomatonView {
 
 impl AutomatonView {
     /// Creates a new AutomatonDisplayer to draw the passed automaton to the passed window.
-    pub(super) async fn new(
+    pub(super) async fn create_view_model(
         window: Window,
         automaton: automaton::Automaton,
     ) -> (Self, super::AutomatonModel) {
@@ -230,7 +230,8 @@ impl AutomatonView {
             .write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
     }
 
-    /// Handles all sorts of window events.
+    /// Handles all sorts of window events that are not related to input affecting the model (these are handled by the controller)
+    /// but instead directly affecting the window and view state.
     pub(super) fn window_events(
         &mut self,
         control_flow: &mut ControlFlow,
