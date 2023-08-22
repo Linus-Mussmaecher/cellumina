@@ -31,6 +31,7 @@ impl Rule for MultiRule {
     }
 }
 
+/// Describes how Rules, specifically [EnvironmentRule] and [PatternRule], deal with the edges of the state space.
 #[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum EdgeBehaviour {
     #[default]
