@@ -7,7 +7,7 @@ pub use builder::AutomatonBuilder;
 mod error;
 pub use error::CelluminaError;
 
-/// Contains
+/// Contains the model, view and controller for diplaying automata.
 pub(crate) mod graphic;
 /// Contains structs and traits for the definition of the transformations rules of cellular automata.
 pub mod rule;
