@@ -34,7 +34,7 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
         .build(&event_loop)
         .expect("Could not init window.");
 
-    let (mut view, mut model) = AutomatonView::new(window, automaton).await;
+    let (mut view, mut model) = AutomatonView::create_view_model(window, automaton).await;
     let mut controller = AutomatonController::new();
 
     event_loop.run(move |event, _event_loop_window_target, control_flow| {
