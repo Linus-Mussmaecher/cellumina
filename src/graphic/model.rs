@@ -8,15 +8,13 @@ pub(super) struct AutomatonModel {
     pub(super) paused: bool,
     /// The current texture updated to the state of the automaton.
     pub(super) cell_state_texture: wgpu::Texture,
-    /// The bind group used to draw the automaton's cells to the image.
-    pub(super) cell_state_bind_group: wgpu::BindGroup,
 }
 
 impl AutomatonModel {
     pub fn new(
         cell_state: automaton::Automaton,
         device: &wgpu::Device,
-    ) -> (Self, wgpu::BindGroupLayout) {
+    ) -> (Self, wgpu::BindGroupLayout, wgpu::BindGroup) {
         let cell_state_texture = device.create_texture(&wgpu::TextureDescriptor {
             // the size of the texture
             size: wgpu::Extent3d {
@@ -101,10 +99,41 @@ impl AutomatonModel {
             Self {
                 cell_state,
                 cell_state_texture,
-                cell_state_bind_group,
                 paused: false,
             },
             cell_state_bind_group_layout,
+            cell_state_bind_group,
         )
+    }
+
+    pub(super) fn write_texture(&self, queue: &mut wgpu::Queue) {
+        queue.write_texture(
+            // copy destination
+            wgpu::ImageCopyTextureBase {
+                texture: &self.cell_state_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            // actual pixel data
+            &self.cell_state.create_image_buffer(),
+            // internal layout
+            wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: Some(4 * self.cell_state.dimensions().1),
+                rows_per_image: Some(self.cell_state.dimensions().0),
+            },
+            // size as above
+            wgpu::Extent3d {
+                width: self.cell_state.dimensions().1,
+                height: self.cell_state.dimensions().0,
+                // ??
+                depth_or_array_layers: 1,
+            },
+        );
+    }
+
+    pub(super) fn update(&mut self) -> bool {
+        !self.paused && self.cell_state.next_step()
     }
 }
