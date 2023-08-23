@@ -21,16 +21,31 @@ rand = "0.8"
 image = "0.24"
 
 # display dependencies
-winit = "0.28"
-wgpu = "0.17"
-pollster = "0.3"
-bytemuck = { version = "1.13.1", features = [ "derive" ] }
+winit = {version = "0.28", optional = true}
+wgpu = {version = "0.17", optional = true}
+pollster = {version = "0.3", optional = true}
+bytemuck = { version = "1.13.1", features = [ "derive" ], optional=true }
 
 # logging
-log = "0.4"
+log = {version = "0.4", optional = true}
 
 [dev-dependencies]
 env_logger = "0.10"
 toml = "0.7"
 
 [features]
+display = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck"]
+log = ["dep:log"]
+
+
+[[example]]
+name = "game_of_life"
+required-features = ["display"]
+
+[[example]]
+name = "sand"
+required-features = ["display"]
+
+[[example]]
+name = "to_string"
+required-features = ["display"]
