@@ -65,8 +65,7 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     // All other errors (Outdated, Timeout) should be resolved by the next frame
-                    Err(e) if cfg!(feature = "log") => log::error!("{:?}", e),
-                    Err(_) => {}
+                    Err(e) => log::error!("{:?}", e),
                 }
             }
             Event::MainEventsCleared => {
