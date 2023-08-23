@@ -99,6 +99,7 @@ impl Automaton {
 
     /// Runs this automaton and displays it in a window.
     /// ```next_step()``` is called every frame, so setting an appropriate time step may be helpful for a smooth display.
+    #[cfg(feature = "display")]
     pub fn run_live(self) {
         pollster::block_on(crate::graphic::run_live(self));
     }

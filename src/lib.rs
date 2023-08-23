@@ -84,6 +84,7 @@ mod error;
 pub use error::CelluminaError;
 
 /// Contains the model, view and controller for diplaying automata.
+#[cfg(feature = "display")]
 pub(crate) mod graphic;
 /// Contains structs and traits for the definition of the transformations rules of cellular automata.
 pub mod rule;
