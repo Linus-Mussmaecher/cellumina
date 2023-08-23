@@ -33,9 +33,7 @@ impl AutomatonController {
                     .cell_state
                     .set_cell(row, col, self.replacement_char)
                     .unwrap_or_else(|err| {
-                        if cfg!(feature = "log") {
-                            log::error!("Could not set cell state: {}.", err);
-                        }
+                        log::error!("Could not set cell state: {}.", err);
                         false
                     });
             }

@@ -14,11 +14,14 @@ keywords = ["cellular", "automaton", "WebGL"]
 
 [dependencies]
 # basic dependencies
-serde = { version = "1.0", features = ["derive"] }
 rayon = "1.7"
 grid = "0.10"
 rand = "0.8"
 image = "0.24"
+# logging
+log = "0.4"
+# serde
+serde = { version = "1.0", features = ["derive"] }
 
 # display dependencies
 winit = {version = "0.28", optional = true}
@@ -26,16 +29,12 @@ wgpu = {version = "0.17", optional = true}
 pollster = {version = "0.3", optional = true}
 bytemuck = { version = "1.13.1", features = [ "derive" ], optional=true }
 
-# logging
-log = {version = "0.4", optional = true}
-
 [dev-dependencies]
 env_logger = "0.10"
 toml = "0.7"
 
 [features]
 display = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck"]
-log = ["dep:log"]
 
 
 [[example]]
