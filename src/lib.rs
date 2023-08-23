@@ -1,5 +1,3 @@
-//! # Cellumina
-//!
 //! [![Docs Status](https://docs.rs/mooeye/badge.svg)](https://docs.rs/cellumina)
 //! [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Linus-Mussmaecher/cellumina/blob/main/LICENSE)
 //! [![Crates.io](https://img.shields.io/crates/v/cellumina.svg)](https://crates.io/crates/cellumina)
@@ -40,6 +38,8 @@
 //! The user can also directly change the state of cells. Press any (character or space) button, and then mouse clicks will replace the currently hovered cell with the pressed character.
 //! The simulation can also be paused and resumed with ```Enter```.
 //!
+//! The live view functionality is not included in the library by default and must be enabled via the ```display``` feature.
+//!
 //! #### Planned Features
 //!
 //! The current state can be exported as a .txt or .png file.
@@ -51,6 +51,15 @@
 //!   [dependencies]
 //!   cellumina = "0.1"
 //! ```
+//!
+//! or
+//!
+//! //! ```toml
+//!   [dependencies]
+//!   cellumina = {version = "0.1", features = ["display"]}
+//! ```
+//!
+//! if you want to enable [live view](###Live View).
 //!
 //! ### Examples
 //!
@@ -64,7 +73,10 @@
 //!  ```bash
 //!     git clone https://github.com/Linus-Mussmaecher/cellumina
 //!  ```
-//!  and running ```cargo run --examples <name>```, for example ```cargo run --examples sand```.
+//!  and executed by using ```cargo run --examples <name> --features="display"```, for example
+//!   ```bash
+//!     cargo run --examples sand --features="display"
+//!   ```
 //!
 //!
 //! ### Performance

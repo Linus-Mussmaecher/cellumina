@@ -40,6 +40,8 @@ This is useful when just playing around with cellular automata.
 The user can also directly change the state of cells. Press any (character or space) button, and then mouse clicks will replace the currently hovered cell with the pressed character.
 The simulation can also be paused and resumed with ```Enter```.
 
+The live view functionality is not included in the library by default and must be enabled via the ```display``` feature.
+
 #### Planned Features
 
 The current state can be exported as a .txt or .png file.
@@ -51,6 +53,12 @@ To use Cellumina in your own project, simply add this line to your ```Cargo.toml
   [dependencies]
   cellumina = "0.1"
 ```
+or
+```toml
+  [dependencies]
+  cellumina = {version = "0.1", features = ["display"]}
+```
+if you want to enable [live view](#live-view).
 
 ### Examples
 
@@ -64,7 +72,10 @@ The [examples folder](https://github.com/Linus-Mussmaecher/cellumina/tree/master
  ```bash
     git clone https://github.com/Linus-Mussmaecher/cellumina
  ```
- and running ```cargo run --examples <name>```, for example ```cargo run --examples sand```.
+ and executed by using ```cargo run --examples <name> --features="display"```, for example
+  ```bash
+    cargo run --examples sand --features="display"
+  ```
 
 
 ### Performance
