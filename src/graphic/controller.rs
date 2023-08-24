@@ -76,7 +76,6 @@ impl AutomatonController {
                         {
                             Ok(pathbuff_option) => match pathbuff_option {
                                 Some(pathbuffer) => {
-                                    println!("{cols} x {rows}");
                                     match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
                                         Some("png") | Some("jpeg") | Some("ico") | Some("pnm")
                                         | Some("bmp") | Some("exr") | Some("tiff") => {
