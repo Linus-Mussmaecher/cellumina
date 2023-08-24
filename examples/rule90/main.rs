@@ -6,7 +6,7 @@ fn main() {
         .from_vec(
             (0..4096)
                 .map(|index| {
-                    if index >= 64 || rand::random::<u8>() % 2 == 0 {
+                    if index <= 64 * 63 || rand::random::<u8>() % 2 == 0 {
                         '0'
                     } else {
                         '1'
@@ -16,8 +16,8 @@ fn main() {
             64,
         )
         // set display colors: 1 is displayed as white, 0 as black
-        .with_color('1', [255, 255, 255, 1])
-        .with_color('0', [0, 0, 0, 1])
+        .with_color('1', [255, 255, 255, 255])
+        .with_color('0', [0, 0, 0, 255])
         // set progression rules
         .with_rule(cellumina::rule::EnvironmentRule {
             // we need to look one row up (to the last state)
@@ -27,14 +27,16 @@ fn main() {
             edge_behaviour: cellumina::rule::EdgeBehaviour::Stop,
             cell_transform: |grid| {
                 // Top row (marked by the row above it containing only '_', the out-of-bounds-symbol) eternally keeps its value.
-                if grid[0][0] == '_' {
-                    grid[1][1]
+                if grid[2][1] == '_' {
+                    if (grid[1][0] == '1') ^ (grid[1][2] == '1') {
+                        '1'
+                    } else {
+                        '0'
+                    }
                 }
                 // Other rows generate the value as the exclusive or of the two neighbors last time step (one row above).
-                else if (grid[0][0] == '1') ^ (grid[0][2] == '1') {
-                    '1'
-                } else {
-                    '0'
+                else {
+                    grid[2][1]
                 }
             },
         })
