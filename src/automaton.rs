@@ -90,7 +90,10 @@ impl Automaton {
                     let before = time::Instant::now();
                     self.rule.transform(&mut self.state);
                     self.last_step = Some(time::Instant::now());
-                    println!("Time step performed in {}.", before.elapsed().as_secs_f32());
+                    log::info!(
+                        "Performed time step in {}s.",
+                        before.elapsed().as_secs_f32()
+                    )
                 }
                 step_permitted
             }
