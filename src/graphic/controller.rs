@@ -64,27 +64,45 @@ impl AutomatonController {
                     // S: If control is down, try to save
                     Some(winit::event::VirtualKeyCode::S) if self.ctrl_down => {
                         let (rows, cols) = model.cell_state.state.size();
-                        if let Ok(Some(pathbuffer)) = native_dialog::FileDialog::new()
+                        match native_dialog::FileDialog::new()
                             .set_location("~")
                             .set_filename("cellumina_output")
                             .add_filter("Cellumina Text", &["txt"])
                             .add_filter("Cellumina Image", &["png", "jpeg"])
                             .show_save_single_file()
                         {
-                            std::fs::write(
-                                pathbuffer,
-                                model.cell_state.state.iter().fold(
-                                    String::with_capacity((cols + 1) * rows),
-                                    |mut container, &cell| {
-                                        if container.len() % (cols + 1) == cols {
-                                            container.push('\n');
+                            Ok(pathbuff_option) => match pathbuff_option {
+                                Some(pathbuffer) => {
+                                    match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
+                                        Some("png") => {}
+                                        Some("txt") | None => {
+                                            if let Err(e) = std::fs::write(
+                                                pathbuffer,
+                                                model.cell_state.state.iter().fold(
+                                                    String::with_capacity((cols + 1) * rows),
+                                                    |mut container, &cell| {
+                                                        if container.len() % (cols + 1) == cols {
+                                                            container.push('\n');
+                                                        }
+                                                        container.push(cell);
+                                                        container
+                                                    },
+                                                ),
+                                            ) {
+                                                log::error!("Writing File Failed: {e}")
+                                            }
                                         }
-                                        container.push(cell);
-                                        container
-                                    },
-                                ),
-                            )
-                            .expect("Could not write file.");
+                                        Some(ext) => {
+                                            log::error!(
+                                                "Detected unsupported file extension: {}",
+                                                ext
+                                            );
+                                        }
+                                    }
+                                }
+                                None => log::info!("File Dialog aborted."),
+                            },
+                            Err(e) => log::error!("File Dialog Error: {e}"),
                         }
 
                         true
