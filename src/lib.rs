@@ -36,13 +36,10 @@
 //! This is useful when just playing around with cellular automata.
 //!
 //! The user can also directly change the state of cells. Press any (character or space) button, and then mouse clicks will replace the currently hovered cell with the pressed character.
-//! The simulation can also be paused and resumed with ```Enter```.
+//! The automaton can also be paused and resumed with ```Enter```.
+//! The current state of the automaton can be saved to a file with ```Ctrl + S```, currently the following formats are supported: ```txt``` (with one row of chararcters per line) as well as ```png, jpeg, ico, pnm, bmp, exr, tiff``` (exactly those supported by the [```image``` crate](https://docs.rs/image/latest/image/)). Normal restrictions of those files apply, e.g. saving to jpeg may result in compression, so ```.jpeg```-files are not suited for saving and reloading automata.
 //!
 //! The live view functionality is not included in the library by default and must be enabled via the ```display``` feature.
-//!
-//! #### Planned Features
-//!
-//! The current state can be exported as a .txt or .png file.
 //!
 //! ## Usage
 //!
@@ -51,15 +48,12 @@
 //!   [dependencies]
 //!   cellumina = "0.1"
 //! ```
-//!
 //! or
-//!
-//! //! ```toml
+//! ```toml
 //!   [dependencies]
 //!   cellumina = {version = "0.1", features = ["display"]}
 //! ```
-//!
-//! if you want to enable [live view](###Live View).
+//! if you want to enable [live view](#live-view).
 //!
 //! ### Examples
 //!
@@ -78,6 +72,10 @@
 //!     cargo run --examples sand --features="display"
 //!   ```
 //!
+//! ### Logging
+//!
+//! Cellumina supports logging via the [log](https://docs.rs/log/latest/log/) crate.
+//! You can use any logger, such as [env-log](https://docs.rs/env_logger/latest/env_logger/) or [simple-logger](https://docs.rs/simple_logger/latest/simple_logger/), initialize them as described in their documentations and receive log outputs from cellumina.
 //!
 //! ### Performance
 //!
