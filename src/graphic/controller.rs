@@ -68,13 +68,30 @@ impl AutomatonController {
                             .set_location("~")
                             .set_filename("cellumina_output")
                             .add_filter("Cellumina Text", &["txt"])
-                            .add_filter("Cellumina Image", &["png", "jpeg"])
+                            .add_filter(
+                                "Cellumina Image",
+                                &["png", "jpeg", "ico", "pnm", "bmp", "exr", "tiff"],
+                            )
                             .show_save_single_file()
                         {
                             Ok(pathbuff_option) => match pathbuff_option {
                                 Some(pathbuffer) => {
+                                    println!("{cols} x {rows}");
                                     match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
-                                        Some("png") => {}
+                                        Some("png") | Some("jpeg") | Some("ico") | Some("pnm")
+                                        | Some("bmp") | Some("exr") | Some("tiff") => {
+                                            if let Err(e) = image::save_buffer(
+                                                pathbuffer,
+                                                &model.cell_state.create_image_buffer(),
+                                                cols as u32,
+                                                rows as u32,
+                                                image::ColorType::Rgba8,
+                                            ) {
+                                                log::error!(
+                                                    "Writing automaton to image file failed: {e}"
+                                                );
+                                            }
+                                        }
                                         Some("txt") | None => {
                                             if let Err(e) = std::fs::write(
                                                 pathbuffer,
@@ -89,7 +106,9 @@ impl AutomatonController {
                                                     },
                                                 ),
                                             ) {
-                                                log::error!("Writing File Failed: {e}")
+                                                log::error!(
+                                                    "Writing automaton to text file failed: {e}"
+                                                )
                                             }
                                         }
                                         Some(ext) => {
