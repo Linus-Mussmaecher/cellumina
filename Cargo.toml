@@ -28,13 +28,14 @@ winit = {version = "0.28", optional = true}
 wgpu = {version = "0.17", optional = true}
 pollster = {version = "0.3", optional = true}
 bytemuck = { version = "1.13.1", features = [ "derive" ], optional=true }
+native-dialog = {version =  "0.6", optional = true}
 
 [dev-dependencies]
 env_logger = "0.10"
 toml = "0.7"
 
 [features]
-display = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck"]
+display = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck", "dep:native-dialog"]
 
 
 [[example]]

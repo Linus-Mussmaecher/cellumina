@@ -64,20 +64,29 @@ impl AutomatonController {
                     // S: If control is down, try to save
                     Some(winit::event::VirtualKeyCode::S) if self.ctrl_down => {
                         let (rows, cols) = model.cell_state.state.size();
-                        std::fs::write(
-                            "./cellumina_output.txt",
-                            model.cell_state.state.iter().fold(
-                                String::with_capacity((cols + 1) * rows),
-                                |mut container, &cell| {
-                                    if container.len() % (cols + 1) == cols {
-                                        container.push('\n');
-                                    }
-                                    container.push(cell);
-                                    container
-                                },
-                            ),
-                        )
-                        .expect("Could not write file.");
+                        if let Ok(Some(pathbuffer)) = native_dialog::FileDialog::new()
+                            .set_location("~")
+                            .set_filename("cellumina_output")
+                            .add_filter("Cellumina Text", &["txt"])
+                            .add_filter("Cellumina Image", &["png", "jpeg"])
+                            .show_save_single_file()
+                        {
+                            std::fs::write(
+                                pathbuffer,
+                                model.cell_state.state.iter().fold(
+                                    String::with_capacity((cols + 1) * rows),
+                                    |mut container, &cell| {
+                                        if container.len() % (cols + 1) == cols {
+                                            container.push('\n');
+                                        }
+                                        container.push(cell);
+                                        container
+                                    },
+                                ),
+                            )
+                            .expect("Could not write file.");
+                        }
+
                         true
                     }
                     // Return pauses and unpauses.
