@@ -124,7 +124,7 @@ impl AutomatonBuilder {
     /// If the vector can't fully fill the last row, it will be padded with spaces.
     pub fn from_vec(mut self, mut vec: Vec<char>, columns: u32) -> Self {
         vec.resize(
-            (columns * (vec.len() as u32 + columns - 1) / columns) as usize,
+            vec.len().checked_div(columns as usize).unwrap_or(0) * (columns as usize),
             ' ',
         );
         self.source = InitSource::Grid(grid::Grid::from_vec(vec, columns as usize));

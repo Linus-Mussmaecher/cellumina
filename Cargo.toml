@@ -49,3 +49,7 @@ required-features = ["display"]
 [[example]]
 name = "to_string"
 required-features = ["display"]
+
+[[example]]
+name = "rule90"
+required-features = ["display"]
