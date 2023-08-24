@@ -68,17 +68,16 @@ impl AutomatonController {
                             .set_location("~")
                             .set_filename("cellumina_output")
                             .add_filter("Cellumina Text", &["txt"])
-                            .add_filter(
-                                "Cellumina Image",
-                                &["png", "jpeg", "ico", "pnm", "bmp", "exr", "tiff"],
-                            )
+                            .add_filter("PNG Image", &["png"])
+                            .add_filter("JPEG Image", &["jpeg"])
+                            .add_filter("ICO image", &["ico"])
+                            .add_filter("BMP Image", &["bmp"])
                             .show_save_single_file()
                         {
                             Ok(pathbuff_option) => match pathbuff_option {
                                 Some(pathbuffer) => {
                                     match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
-                                        Some("png") | Some("jpeg") | Some("ico") | Some("pnm")
-                                        | Some("bmp") | Some("exr") | Some("tiff") => {
+                                        Some("png") | Some("jpeg") | Some("ico") | Some("bmp") => {
                                             if let Err(e) = image::save_buffer(
                                                 pathbuffer,
                                                 &model.cell_state.create_image_buffer(),
@@ -219,5 +218,15 @@ fn get_keymap() -> std::collections::HashMap<winit::event::VirtualKeyCode, char>
         (winit::event::VirtualKeyCode::X, 'X'),
         (winit::event::VirtualKeyCode::Y, 'Y'),
         (winit::event::VirtualKeyCode::Z, 'Z'),
+        (winit::event::VirtualKeyCode::Key1, '1'),
+        (winit::event::VirtualKeyCode::Key2, '2'),
+        (winit::event::VirtualKeyCode::Key3, '3'),
+        (winit::event::VirtualKeyCode::Key4, '4'),
+        (winit::event::VirtualKeyCode::Key5, '5'),
+        (winit::event::VirtualKeyCode::Key6, '6'),
+        (winit::event::VirtualKeyCode::Key7, '7'),
+        (winit::event::VirtualKeyCode::Key8, '8'),
+        (winit::event::VirtualKeyCode::Key9, '9'),
+        (winit::event::VirtualKeyCode::Key0, '0'),
     ])
 }
