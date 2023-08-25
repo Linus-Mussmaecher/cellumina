@@ -10,9 +10,8 @@ fn main() {
         //.from_text_file("./examples/game_of_life/gol_init2.txt")
         // Describe the rule of Conway's Game Of Life.
         .with_rule(cellumina::rule::EnvironmentRule {
-            // Each cell only cares about neighbors 1 field away.
-            row_range: 1,
-            col_range: 1,
+            // Each cell only cares about neighbors 1 field away, in every direction.
+            environment_size: [1, 1, 1, 1],
             row_boundary: cellumina::rule::BoundaryBehaviour::Symbol('_'),
             col_boundary: cellumina::rule::BoundaryBehaviour::Symbol('_'),
             cell_transform: |env| match env

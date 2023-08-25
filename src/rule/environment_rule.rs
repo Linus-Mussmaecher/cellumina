@@ -9,8 +9,7 @@ use crate::CellGrid;
 /// ```
 /// use cellumina::rule::Rule;
 /// let rule = cellumina::rule::EnvironmentRule {
-///     row_range: 1,
-///     col_range: 1,
+///     environment_size: [1,1,1,1],
 ///     row_boundary: cellumina::rule::BoundaryBehaviour::Periodic,
 ///     col_boundary: cellumina::rule::BoundaryBehaviour::Periodic,
 ///     cell_transform: |env: &cellumina::CellGrid| match env
@@ -53,30 +52,39 @@ use crate::CellGrid;
 /// ```
 #[derive(Clone, Copy)]
 pub struct EnvironmentRule {
-    /// The vertical range of an environment, extending in both direction from the cell to be transformed.
+    /// The distance the considered environment extends from the cell to be set, in order ```[top, right, bottom, left]```.
     ///
-    /// Your ```cell_transform``` function will receive a grid of height ```2 * row_range + 1```, centered on the cell that will be replaced by the output.
-    pub row_range: usize,
-    /// The horizontal range of an environment, extending in both direction from the cell to be transformed.
+    /// Your cell_transform function will receive a grid of size ```(top + bottom + 1) * (left + right + 1)``` to calculate the next state of the cell in the middle.
     ///
-    /// Your ```cell_transform``` function will receive a grid of width ```2 * col_range + 1```, centered on the cell that will be replaced by the output.
-    pub col_range: usize,
-    /// Describes the way the rule deals with cases in which the environment of a cell contains rows that go out of bounds of the state grid.
+    /// ```text
+    ///  +---------------+
+    ///  |       |       |
+    ///  |      top      |
+    ///  |       |       |
+    ///  |--left-C-right-|
+    ///  |       |       |
+    ///  |     bottom    |
+    ///  |       |       |
+    ///  +---------------+
+    ///
+    /// ```
+    pub environment_size: [usize; 4],
+    /// Behaviour of this rule when encountering cases in which the environment of a cell contains rows that go out of bounds of the state grid.
     pub row_boundary: super::BoundaryBehaviour,
-    /// Describes the way the rule deals with cases in which the environment of a cell contains columns that go out of bounds of the state grid.
+    /// Behaviour of this rule when encountering cases in which the environment of a cell contains columns that go out of bounds of the state grid.
     pub col_boundary: super::BoundaryBehaviour,
     /// The function that calculates the next state of a single cell based on its environment.
     ///
-    /// Receives a grid of size ```2 * row_range + 1``` x ```2 * col_range + 1```. Must return a character.
-    /// In the next iteration after applying this rule, the cell in the center of the received grid will contain the return value of this function.
+    /// Receives a grid of size ```(top + bottom + 1) * (left + right + 1)```, where ```[top, right, bottom, left]``` is the ```enviroment_size```.
+    /// Must return a character.
+    /// In the next iteration after applying this rule, the cell at position ```[top][left]```, with ```[0][0]``` being the top right, of the received grid will contain the return value of this function.
     pub cell_transform: fn(&CellGrid) -> char,
 }
 
 impl Default for EnvironmentRule {
     fn default() -> Self {
         Self {
-            row_range: Default::default(),
-            col_range: Default::default(),
+            environment_size: [1, 1, 1, 1],
             row_boundary: Default::default(),
             col_boundary: Default::default(),
             cell_transform: |_| ' ',
@@ -87,15 +95,20 @@ impl Default for EnvironmentRule {
 impl std::fmt::Debug for EnvironmentRule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EnvironmentRule")
-            .field("range_vert", &self.row_range)
-            .field("range_hor", &self.col_range)
+            .field("environment_size", &self.environment_size)
+            .field("row_boundary", &self.row_boundary)
+            .field("col_boundary", &self.col_boundary)
+            //.field("cell_transform", &self.cell_transform)
             .finish()
     }
 }
 
 impl super::Rule for EnvironmentRule {
     fn transform(&self, grid: &mut CellGrid) {
-        let mut buffer = grid::Grid::new(2 * self.row_range + 1, 2 * self.col_range + 1);
+        let mut buffer = grid::Grid::new(
+            self.environment_size[0] + self.environment_size[2] + 1,
+            self.environment_size[1] + self.environment_size[3] + 1,
+        );
         let (rows, cols) = grid.size();
 
         // correction factor to make sure no overflowing subtractions happen
@@ -104,12 +117,12 @@ impl super::Rule for EnvironmentRule {
 
         for row in 0..rows {
             for col in 0..cols {
-                for row_del in 0..=2 * self.row_range {
-                    for col_del in 0..=2 * self.col_range {
+                for row_del in 0..=(self.environment_size[0] + self.environment_size[2]) {
+                    for col_del in 0..=(self.environment_size[1] + self.environment_size[3]) {
                         // Calculate the index we are interested in.
                         let (mut t_row, mut t_col) = (
-                            (row + row_del).wrapping_sub(self.row_range),
-                            (col + col_del).wrapping_sub(self.col_range),
+                            (row + row_del).wrapping_sub(self.environment_size[0]),
+                            (col + col_del).wrapping_sub(self.environment_size[3]),
                         );
 
                         let mut done = false;
