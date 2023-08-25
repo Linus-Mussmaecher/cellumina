@@ -74,7 +74,9 @@ impl AutomatonController {
                             .add_filter("BMP Image", &["bmp"])
                             .show_save_single_file()
                         {
+                            Err(e) => log::error!("File Dialog Error: {e}"),
                             Ok(pathbuff_option) => match pathbuff_option {
+                                None => log::info!("File Dialog aborted."),
                                 Some(pathbuffer) => {
                                     match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
                                         Some("png") | Some("jpeg") | Some("ico") | Some("bmp") => {
@@ -117,9 +119,7 @@ impl AutomatonController {
                                         }
                                     }
                                 }
-                                None => log::info!("File Dialog aborted."),
                             },
-                            Err(e) => log::error!("File Dialog Error: {e}"),
                         }
 
                         true
