@@ -26,7 +26,12 @@ fn main() {
             row_range: 1,
             // and one row to each side
             col_range: 1,
-            edge_behaviour: cellumina::rule::EdgeBehaviour::Stop,
+            boundaries: (
+                // Towards the top and bottom, we have a true boundary.
+                cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+                // Towards the left and right, we are pseudo-infinite with a periodic boundary.
+                cellumina::rule::BoundaryBehaviour::PeriodicBoundary,
+            ),
             cell_transform: |grid| {
                 // Top row (marked by the row above it containing only '_', the out-of-bounds-symbol) eternally keeps its value.
                 if grid[2][1] == '_' {

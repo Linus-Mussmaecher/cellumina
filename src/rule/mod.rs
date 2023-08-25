@@ -33,30 +33,36 @@ impl Rule for MultiRule {
 
 /// Describes how Rules, specifically [EnvironmentRule] and [PatternRule], deal with the edges of the state space.
 #[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
-pub enum EdgeBehaviour {
+pub enum BoundaryBehaviour {
     #[default]
     /// When trying to get a cell from an index outside of the state space, wrap around
-    Wrap,
+    PeriodicBoundary,
     /// When trying to get a cell from outside the state space, return '_' to indicate a wall.
     /// PatternRules will not check subareas that leave the state space.
-    Stop,
+    BoundarySymbol(char),
 }
 
-impl Display for EdgeBehaviour {
+impl Display for BoundaryBehaviour {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EdgeBehaviour::Wrap => write!(f, "Wrap"),
-            EdgeBehaviour::Stop => write!(f, "Stop"),
+            BoundaryBehaviour::PeriodicBoundary => write!(f, "Periodic"),
+            BoundaryBehaviour::BoundarySymbol(symbol) => write!(f, "Symbol:{symbol}"),
         }
     }
 }
 
-impl From<&str> for EdgeBehaviour {
+impl From<&str> for BoundaryBehaviour {
     fn from(value: &str) -> Self {
         match value {
-            "Wrap" => Self::Wrap,
-            "Stop" => Self::Stop,
-            _ => Self::Stop,
+            "Periodic" => Self::PeriodicBoundary,
+            value => {
+                let parts = value.split(':').collect::<Vec<&str>>();
+                if parts[0] == "Symbol" {
+                    Self::BoundarySymbol(parts[1].as_bytes()[0] as char)
+                } else {
+                    Self::BoundarySymbol(' ')
+                }
+            }
         }
     }
 }

@@ -13,7 +13,10 @@ fn main() {
             // Each cell only cares about neighbors 1 field away.
             row_range: 1,
             col_range: 1,
-            edge_behaviour: cellumina::rule::EdgeBehaviour::Stop,
+            boundaries: (
+                cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+                cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+            ),
             cell_transform: |env| match env
             // Iterate over neighbors.
                 .iter()

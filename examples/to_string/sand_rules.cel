@@ -1,4 +1,6 @@
-Stop;
+Symbol:_;
+
+Periodic;
 
 0.9;
 1;

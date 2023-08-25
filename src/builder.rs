@@ -265,8 +265,12 @@ impl AutomatonBuilder {
     }
 
     /// Modifies the [rule::EdgeBehaviour] of the internal [rule::PatternRule].
-    pub fn with_pattern_edge_behaviour(mut self, edge_behaviour: rule::EdgeBehaviour) -> Self {
-        self.pattern_rule.edge_behaviour = edge_behaviour;
+    pub fn with_pattern_edge_behaviour(
+        mut self,
+        row_boundary: rule::BoundaryBehaviour,
+        column_boundary: rule::BoundaryBehaviour,
+    ) -> Self {
+        self.pattern_rule.boundaries = (row_boundary, column_boundary);
         self
     }
 
