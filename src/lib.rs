@@ -46,12 +46,12 @@
 //! To use Cellumina in your own project, simply add this line to your ```Cargo.toml``` file:
 //! ```toml
 //!   [dependencies]
-//!   cellumina = "0.1"
+//!   cellumina = "0.2"
 //! ```
 //! or
 //! ```toml
 //!   [dependencies]
-//!   cellumina = {version = "0.1", features = ["display"]}
+//!   cellumina = {version = "0.2", features = ["display"]}
 //! ```
 //! if you want to enable [live view](#live-view).
 //!
