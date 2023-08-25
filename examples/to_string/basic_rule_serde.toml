@@ -1,4 +1,4 @@
-boundaries = ["PeriodicBoundary", "PeriodicBoundary"]
+boundaries = ["Periodic", "Periodic"]
 
 [[patterns]]
 chance = 1.0
