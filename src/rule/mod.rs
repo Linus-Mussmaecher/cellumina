@@ -31,14 +31,14 @@ impl Rule for MultiRule {
     }
 }
 
-/// Describes how Rules, specifically [EnvironmentRule] and [PatternRule], deal with the edges of the state space.
+/// Describes how Rules, specifically [EnvironmentRule] and [PatternRule], deal with the boundaries of the state grid.
 #[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum BoundaryBehaviour {
     #[default]
-    /// When trying to get a cell from an index outside of the state space, wrap around
+    /// When trying to get a cell from an index outside of the state grid, wrap around
     Periodic,
-    /// When trying to get a cell from outside the state space, return '_' to indicate a wall.
-    /// PatternRules will not check subareas that leave the state space.
+    /// When trying to get a cell from outside the state grid, return '_' to indicate a wall.
+    /// [PatternRule] will simply not check subareas that leave the state grid.
     Symbol(char),
 }
 

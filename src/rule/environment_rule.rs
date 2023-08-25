@@ -61,9 +61,9 @@ pub struct EnvironmentRule {
     ///
     /// Your ```cell_transform``` function will receive a grid of width ```2 * col_range + 1```, centered on the cell that will be replaced by the output.
     pub col_range: usize,
-    /// How the rule is supposed to handle cells at the edges of the state space.
-    /// The first item describes how to handle trying to access rows out of range, the second columns out of range.
+    /// Describes the way the rule deals with cases in which the environment of a cell contains rows that go out of bounds of the state grid.
     pub row_boundary: super::BoundaryBehaviour,
+    /// Describes the way the rule deals with cases in which the environment of a cell contains columns that go out of bounds of the state grid.
     pub col_boundary: super::BoundaryBehaviour,
     /// The function that calculates the next state of a single cell based on its environment.
     ///
