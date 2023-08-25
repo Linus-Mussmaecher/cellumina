@@ -87,13 +87,13 @@ impl Automaton {
             StepMode::Limited { interval } => {
                 let step_permitted = self.last_step.unwrap().elapsed() >= interval;
                 if step_permitted {
-                    let before = time::Instant::now();
+                    // let before = time::Instant::now();
                     self.rule.transform(&mut self.state);
                     self.last_step = Some(time::Instant::now());
-                    log::info!(
-                        "Performed time step in {}s.",
-                        before.elapsed().as_secs_f32()
-                    )
+                    // log::info!(
+                    //     "Performed time step in {}s.",
+                    //     before.elapsed().as_secs_f32()
+                    // )
                 }
                 step_permitted
             }

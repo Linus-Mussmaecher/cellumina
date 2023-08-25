@@ -7,7 +7,7 @@ fn main() {
     // Build an Automaton using the dedicated Builder struct.
     cellumina::AutomatonBuilder::new()
         // Use a text file as source of initial state.
-        .from_text_file("./examples/sand/sand_init.txt")
+        .from_file_picker("./examples/sand/sand_init.txt")
         .with_pattern_edge_behaviour(cellumina::rule::EdgeBehaviour::Stop)
         // Now specify the patters we want to use to transform our state.
         .with_patterns(&vec![

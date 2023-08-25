@@ -31,20 +31,132 @@ pub struct AutomatonBuilder {
     source: InitSource,
     colors: HashMap<char, [u8; 4]>,
     step_mode: automaton::StepMode,
-    // TODO: EdgeBehaviour
 }
+
+/// Represents one of multiple ways a grid can be initialized.
 enum InitSource {
+    /// No initial source, will result in an empty grid.
     None,
+    /// Allows the user to select a file that will be converted to a different init source and then initialized.
+    FilePicker(Box<dyn AsRef<std::path::Path>>),
+    /// Initializes the character grid from the lines of a text file.
     TextFile(Box<dyn AsRef<std::path::Path>>),
+    /// Initializes the character grid from an image file.
     ImageFile(Box<dyn AsRef<std::path::Path>>),
+    /// Initializes the character grid directly from an already loaded image buffer.
     ImageBuffer(image::ImageBuffer<image::Rgba<u8>, Vec<u8>>),
+    /// Directly receives a file grid and passes it on.
     Grid(CellGrid),
+}
+
+impl InitSource {
+    /// Turns an init source into a fully initialized CellGrid.
+    fn create_grid(
+        self,
+        colors: &HashMap<char, [u8; 4]>,
+    ) -> Result<CellGrid, crate::CelluminaError> {
+        match self {
+            // No source -> empty grid
+            InitSource::None => Err(crate::CelluminaError::CustomError(
+                "No source was provided for automaton initialization. Falling back to empty grid."
+                    .to_string(),
+            )),
+            // File Picker -> Let user pick, then use another init method
+            InitSource::FilePicker(init_path) => {
+                let pathbuffer =  native_dialog::FileDialog::new()
+                    .set_location(init_path.as_ref())
+                    .set_filename("cellumina_output")
+                    .add_filter("Text File", &["txt"])
+                    .add_filter("Image File", &["png", "jpeg", "ico", "bmp"])
+                    .add_filter("Any", &["*"])
+                    .show_open_single_file()?
+                    .ok_or(crate::CelluminaError::CustomError(
+                        "No source file was selected for automaton initialization. Falling back to empty grid.".to_string()
+                    ))?;
+                match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
+                    Some("png") | Some("jpeg") | Some("ico") | Some("bmp") => {
+                        InitSource::ImageFile(Box::new(pathbuffer)).create_grid(colors)
+                    }
+                    Some("txt") | None | Some(_) => {
+                        log::info!(
+                            "Unrecognized File extension, attempting to read as plain text."
+                        );
+                        InitSource::TextFile(Box::new(pathbuffer)).create_grid(colors)
+                    }
+                }
+            }
+            // Grid -> Directly return it back
+            InitSource::Grid(grid) => Ok(grid),
+            InitSource::TextFile(path) => {
+                // read file
+                let content = std::fs::read_to_string(path.as_ref())?;
+                // split into lines
+                let lines: Vec<&str> = content.split('\n').collect();
+                // get number of columns (chars in largest line)
+                // subtracting one from each line because of leftover newline
+                let cols = lines
+                    .iter()
+                    .map(|line| line.len().saturating_sub(1))
+                    .max()
+                    .unwrap_or_default();
+
+                // create grid to hold data
+                let mut grid = grid::Grid::<char>::new(0, cols);
+
+                // iterate over lines and add them to the grid
+                for line in lines {
+                    // create char vector
+                    let mut chars: Vec<char> = line.replace('\r', "").chars().collect();
+                    // make sure vector is neither to large nor to small
+                    chars.resize(cols, ' ');
+                    // push to the grid
+                    grid.push_row(chars);
+                }
+
+                Ok(grid)
+            }
+            InitSource::ImageBuffer(buffer) => {
+                let mut grid = grid::Grid::new(
+                    buffer.dimensions().1 as usize,
+                    buffer.dimensions().0 as usize,
+                );
+
+                for row in 0..grid.rows() {
+                    for col in 0..grid.cols() {
+                        grid[row][col] = colors
+                            .iter()
+                            .find_map(|(key, value)| {
+                                if value == &buffer.get_pixel(col as u32, row as u32).0 {
+                                    Some(key)
+                                } else {
+                                    None
+                                }
+                            })
+                            .copied()
+                            .unwrap_or(' ')
+                    }
+                }
+
+                Ok(grid)
+            }
+            InitSource::ImageFile(path) => Self::ImageBuffer(
+                image::io::Reader::open(path.as_ref())?
+                    .decode()?
+                    .into_rgba8(),
+            )
+            .create_grid(colors),
+        }
+    }
 }
 
 impl std::fmt::Debug for InitSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::None => write!(f, "None"),
+            Self::FilePicker(arg0) => f
+                .debug_tuple("TextFile")
+                .field(&(*arg0.as_ref()).as_ref().to_str())
+                .finish(),
             Self::TextFile(arg0) => f
                 .debug_tuple("TextFile")
                 .field(&(*arg0.as_ref()).as_ref().to_str())
@@ -80,6 +192,14 @@ impl AutomatonBuilder {
     /// See also: [`automaton::Automaton::next_step()`].
     pub fn with_min_time_step(mut self, interval: std::time::Duration) -> Self {
         self.step_mode = automaton::StepMode::Limited { interval };
+        self
+    }
+
+    /// Use a file picker to supply the initial state of the automaton.
+    ///
+    /// Upon calling build, a file dialogue will open and prompt the user to select an appropriate file from which rules can be loaded (.txt or image file)
+    pub fn from_file_picker(mut self, initial_path: impl AsRef<std::path::Path> + 'static) -> Self {
+        self.source = InitSource::FilePicker(Box::new(initial_path));
         self
     }
 
@@ -183,47 +303,14 @@ impl AutomatonBuilder {
     /// Completes the build process and produces an [cellular automaton](automaton::Automaton) as specified.
     pub fn build(mut self) -> automaton::Automaton {
         automaton::Automaton {
-            state: match std::mem::replace(&mut self.source, InitSource::None) {
-                InitSource::None => grid::Grid::new(10, 10),
-                InitSource::Grid(grid) => grid,
-                InitSource::TextFile(path) => {
-                    // read file
-                    let content =
-                        std::fs::read_to_string(path.as_ref()).expect("Could not read file.");
-                    // split into lines
-                    let lines: Vec<&str> = content.split('\n').collect();
-                    // get number of columns (chars in largest line)
-                    // subtracting one from each line because of leftover newline
-                    let cols = lines
-                        .iter()
-                        .map(|line| line.len().saturating_sub(1))
-                        .max()
-                        .unwrap_or_default();
-
-                    // create grid to hold data
-                    let mut grid = grid::Grid::<char>::new(0, cols);
-
-                    // iterate over lines and add them to the grid
-                    for line in lines {
-                        // create char vector
-                        let mut chars: Vec<char> = line.replace('\r', "").chars().collect();
-                        // make sure vector is neither to large nor to small
-                        chars.resize(cols, ' ');
-                        // push to the grid
-                        grid.push_row(chars);
-                    }
-
-                    grid
-                }
-                InitSource::ImageBuffer(image) => self.buffer_to_grid(image),
-                InitSource::ImageFile(path) => self.buffer_to_grid(
-                    image::io::Reader::open(path.as_ref())
-                        .expect("Could not read file.")
-                        .decode()
-                        .expect("Could not decode file.")
-                        .into_rgba8(),
-                ),
-            },
+            state: std::mem::replace(&mut self.source, InitSource::None)
+                .create_grid(&self.colors)
+                .unwrap_or_else(|err| {
+                    log::error!(
+                        "Encountered error while attempting to initialize automaton state:\n{err}"
+                    );
+                    grid::Grid::new(16, 16)
+                }),
             rule: {
                 if !self.pattern_rule.patterns.is_empty() {
                     self.rules.push(Box::new(self.pattern_rule));
@@ -239,35 +326,6 @@ impl AutomatonBuilder {
             last_step: None,
             colors: self.colors,
         }
-    }
-
-    fn buffer_to_grid(
-        &self,
-        buffer: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
-    ) -> crate::CellGrid {
-        let mut grid = grid::Grid::new(
-            buffer.dimensions().1 as usize,
-            buffer.dimensions().0 as usize,
-        );
-
-        for row in 0..grid.rows() {
-            for col in 0..grid.cols() {
-                grid[row][col] = self
-                    .colors
-                    .iter()
-                    .find_map(|(key, value)| {
-                        if value == &buffer.get_pixel(col as u32, row as u32).0 {
-                            Some(key)
-                        } else {
-                            None
-                        }
-                    })
-                    .copied()
-                    .unwrap_or(' ')
-            }
-        }
-
-        grid
     }
 }
 
