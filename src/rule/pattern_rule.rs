@@ -12,7 +12,8 @@ use std::fmt::Display;
 pub struct PatternRule {
     /// The replacment patterns of this rule.
     pub(crate) patterns: Vec<Pattern>,
-    /// How the patterns in this rule will deal with the edges of the state space. Currently non-functional.
+    /// How the rule is supposed to handle cells at the edges of the state space.
+    /// The first item describes how to handle trying to access rows out of range, the second columns out of range.
     pub(crate) boundaries: (BoundaryBehaviour, BoundaryBehaviour),
 }
 
