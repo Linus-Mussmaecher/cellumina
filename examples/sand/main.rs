@@ -7,8 +7,12 @@ fn main() {
     // Build an Automaton using the dedicated Builder struct.
     cellumina::AutomatonBuilder::new()
         // Use a text file as source of initial state.
-        .from_file_picker("./examples/sand/sand_init.txt")
-        .with_pattern_edge_behaviour(cellumina::rule::EdgeBehaviour::Stop)
+        .from_text_file("./examples/sand/sand_init.txt")
+        // Define how the automoton deals with the boundaries of the state space.
+        .with_pattern_edge_behaviour(
+            cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+            cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+        )
         // Now specify the patters we want to use to transform our state.
         .with_patterns(&vec![
             // Sand (X) falls down by one or even two spaces if possible.

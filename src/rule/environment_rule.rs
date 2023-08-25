@@ -61,7 +61,8 @@ pub struct EnvironmentRule {
     /// Your ```cell_transform``` function will receive a grid of width ```2 * col_range + 1```, centered on the cell that will be replaced by the output.
     pub col_range: usize,
     /// How the rule is supposed to handle cells at the edges of the state space.
-    pub edge_behaviour: super::EdgeBehaviour,
+    /// The first item describes how to handle trying to access rows out of range, the second columns out of range.
+    pub boundaries: (super::BoundaryBehaviour, super::BoundaryBehaviour),
     /// The function that calculates the next state of a single cell based on its environment.
     ///
     /// Receives a grid of size ```2 * row_range + 1``` x ```2 * col_range + 1```. Must return a character.
@@ -74,7 +75,7 @@ impl Default for EnvironmentRule {
         Self {
             row_range: Default::default(),
             col_range: Default::default(),
-            edge_behaviour: Default::default(),
+            boundaries: Default::default(),
             cell_transform: |_| ' ',
         }
     }
@@ -102,24 +103,45 @@ impl super::Rule for EnvironmentRule {
             for col in 0..cols {
                 for row_del in 0..=2 * self.row_range {
                     for col_del in 0..=2 * self.col_range {
-                        // Fill the buffer with values from the grid
-                        buffer[row_del][col_del] = grid
-                            // try to get normally
-                            .get(
-                                (row + row_del).wrapping_sub(self.row_range),
-                                (col + col_del).wrapping_sub(self.col_range),
-                            )
-                            .copied()
-                            // if outside of grid, check edge behavior
-                            .unwrap_or_else(|| match self.edge_behaviour {
-                                // Wrap: Do a modulus calculation to get from the other side of the grid
-                                super::EdgeBehaviour::Wrap => {
-                                    grid[(row + rows + row_del - self.row_range) % rows]
-                                        [(col + cols + col_del - self.col_range) % cols]
+                        // Calculate the index we are interested in.
+                        let (mut t_row, mut t_col) = (
+                            (row + row_del).wrapping_sub(self.row_range),
+                            (col + col_del).wrapping_sub(self.col_range),
+                        );
+
+                        let mut done = false;
+
+                        // If it is too large check the boundary condition.
+                        // The < 0 case is handled because we are performing a wrapping sub.
+                        // This might be error-prone if rows is close to the maximum value of a usize.
+                        if t_col >= cols {
+                            match self.boundaries.1 {
+                                // Perdiodic: Take the modulus.
+                                super::BoundaryBehaviour::PeriodicBoundary => t_col %= cols,
+                                // Symbol: Set the buffer to a fixed element.
+                                super::BoundaryBehaviour::BoundarySymbol(symbol) => {
+                                    buffer[row_del][col_del] = symbol;
+                                    done = true;
                                 }
-                                // Show: Show 'Outside Of Grid'-Cells as Underscore.
-                                super::EdgeBehaviour::Stop => '_',
-                            });
+                            }
+                        }
+
+                        // Do the same for rows. Doing rows later ensures the boundary symbol of rows takes precedence if need be.
+                        if t_row >= rows {
+                            match self.boundaries.0 {
+                                // Perdiodic: Take the modulus.
+                                super::BoundaryBehaviour::PeriodicBoundary => t_row %= rows,
+                                // Symbol: Set the buffer to a fixed element.
+                                super::BoundaryBehaviour::BoundarySymbol(symbol) => {
+                                    buffer[row_del][col_del] = symbol;
+                                    done = true;
+                                }
+                            }
+                        }
+
+                        if !done {
+                            buffer[row_del][col_del] = grid[t_row][t_col]
+                        }
                     }
                 }
                 res[row][col] = (self.cell_transform)(&buffer);

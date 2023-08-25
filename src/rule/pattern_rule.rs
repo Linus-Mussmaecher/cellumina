@@ -1,4 +1,4 @@
-use super::{EdgeBehaviour, Rule};
+use super::{BoundaryBehaviour, Rule};
 use crate::CellGrid;
 use rand::seq::SliceRandom;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -13,12 +13,13 @@ pub struct PatternRule {
     /// The replacment patterns of this rule.
     pub(crate) patterns: Vec<Pattern>,
     /// How the patterns in this rule will deal with the edges of the state space. Currently non-functional.
-    pub(crate) edge_behaviour: EdgeBehaviour,
+    pub(crate) boundaries: (BoundaryBehaviour, BoundaryBehaviour),
 }
 
 impl Display for PatternRule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{};\n\n", self.edge_behaviour)?;
+        write!(f, "{};\n\n", self.boundaries.0)?;
+        write!(f, "{};\n\n", self.boundaries.1)?;
         for pattern in self.patterns.iter() {
             writeln!(f, "{}", pattern)?;
         }
@@ -31,7 +32,10 @@ impl From<&str> for PatternRule {
         let mut vals = value.split(";\n\n");
 
         PatternRule {
-            edge_behaviour: EdgeBehaviour::from(vals.next().unwrap()),
+            boundaries: (
+                BoundaryBehaviour::from(vals.next().unwrap()),
+                BoundaryBehaviour::from(vals.next().unwrap()),
+            ),
             patterns: vals
                 .filter(|val| !val.is_empty())
                 .map(Pattern::from)
@@ -206,15 +210,22 @@ impl PatternRule {
     pub fn new_empty() -> Self {
         Self {
             patterns: Vec::new(),
-            edge_behaviour: EdgeBehaviour::Stop,
+            boundaries: (
+                BoundaryBehaviour::BoundarySymbol('_'),
+                BoundaryBehaviour::BoundarySymbol('_'),
+            ),
         }
     }
 
     /// Create a new pattern rule from a set of patterns.
-    pub fn from_patterns(rules: &[Pattern], edge_behaviour: EdgeBehaviour) -> Self {
+    pub fn from_patterns(
+        rules: &[Pattern],
+        row_boundary: BoundaryBehaviour,
+        column_boundary: BoundaryBehaviour,
+    ) -> Self {
         Self {
             patterns: rules.to_vec(),
-            edge_behaviour,
+            boundaries: (row_boundary, column_boundary),
         }
     }
 }
@@ -233,12 +244,17 @@ impl Rule for PatternRule {
             .filter_map(|pattern| {
                 let mut partial_res = Vec::new();
 
-                let (row_stop, col_stop) = match self.edge_behaviour {
-                    EdgeBehaviour::Wrap => (rows, cols),
-                    EdgeBehaviour::Stop => (
-                        rows - pattern.before.rows() + 1,
+                let row_stop = match self.boundaries.0 {
+                    BoundaryBehaviour::PeriodicBoundary => rows,
+                    BoundaryBehaviour::BoundarySymbol(_)=> 
+                        rows - pattern.before.rows() + 1
+                    ,
+                };
+
+                let col_stop = match self.boundaries.1 {
+                    BoundaryBehaviour::PeriodicBoundary => cols,
+                    BoundaryBehaviour::BoundarySymbol(_)=> 
                         cols - pattern.before.cols() + 1,
-                    ),
                 };
 
                 for row in 0..row_stop {

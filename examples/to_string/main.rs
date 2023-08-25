@@ -22,7 +22,8 @@ fn main() {
                 after: grid::grid![[' ', ' ']['X', 'X']],
             },
         ],
-        cellumina::rule::EdgeBehaviour::Wrap,
+        cellumina::rule::BoundaryBehaviour::PeriodicBoundary,
+        cellumina::rule::BoundaryBehaviour::PeriodicBoundary,
     );
 
     // Rules can be converted to strings.
@@ -58,7 +59,7 @@ fn main() {
                 .as_str(),
         ))
         // The initial state is loaded from a different file.
-        .from_file_picker("./examples/sand/sand_init.txt")
+        .from_text_file("./examples/sand/sand_init.txt")
         // Set the colors again
         .with_colors(std::collections::HashMap::from([
             // space is nothing, so well use a soft blue as our background.
