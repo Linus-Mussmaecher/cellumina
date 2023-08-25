@@ -71,7 +71,8 @@ impl From<&str> for PatternRule {
 ///             after: grid::grid![['X', 'X'][' ', ' ']],
 ///         },
 ///     ],
-///     cellumina::rule::EdgeBehaviour::Stop,
+///     cellumina::rule::BoundaryBehaviour::Symbol('_'),
+///     cellumina::rule::BoundaryBehaviour::Symbol('_'),
 /// );
 ///
 /// let mut grid = grid::grid![[' ', 'X']['X', ' '][' ', ' ']];
@@ -211,8 +212,8 @@ impl PatternRule {
         Self {
             patterns: Vec::new(),
             boundaries: (
-                BoundaryBehaviour::BoundarySymbol('_'),
-                BoundaryBehaviour::BoundarySymbol('_'),
+                BoundaryBehaviour::Symbol('_'),
+                BoundaryBehaviour::Symbol('_'),
             ),
         }
     }
@@ -245,15 +246,15 @@ impl Rule for PatternRule {
                 let mut partial_res = Vec::new();
 
                 let row_stop = match self.boundaries.0 {
-                    BoundaryBehaviour::PeriodicBoundary => rows,
-                    BoundaryBehaviour::BoundarySymbol(_)=> 
+                    BoundaryBehaviour::Periodic => rows,
+                    BoundaryBehaviour::Symbol(_)=> 
                         rows - pattern.before.rows() + 1
                     ,
                 };
 
                 let col_stop = match self.boundaries.1 {
-                    BoundaryBehaviour::PeriodicBoundary => cols,
-                    BoundaryBehaviour::BoundarySymbol(_)=> 
+                    BoundaryBehaviour::Periodic => cols,
+                    BoundaryBehaviour::Symbol(_)=> 
                         cols - pattern.before.cols() + 1,
                 };
 

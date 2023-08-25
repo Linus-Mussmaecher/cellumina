@@ -14,8 +14,8 @@ fn main() {
             row_range: 1,
             col_range: 1,
             boundaries: (
-                cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
-                cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+                cellumina::rule::BoundaryBehaviour::Symbol('_'),
+                cellumina::rule::BoundaryBehaviour::Symbol('_'),
             ),
             cell_transform: |env| match env
             // Iterate over neighbors.

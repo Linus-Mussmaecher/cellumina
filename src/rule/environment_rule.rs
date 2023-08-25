@@ -9,9 +9,9 @@ use crate::CellGrid;
 /// ```
 /// use cellumina::rule::Rule;
 /// let rule = cellumina::rule::EnvironmentRule {
-///     range_vert: 1,
-///     edge_behaviour: cellumina::rule::EdgeBehaviour::Wrap,
-///     range_hor: 1,
+///     row_range: 1,
+///     col_range: 1,
+///     boundaries: (cellumina::rule::BoundaryBehaviour::Periodic, cellumina::rule::BoundaryBehaviour::Periodic),
 ///     cell_transform: |env: &cellumina::CellGrid| match env
 ///     // Iterate over neighbors.
 ///         .iter()
@@ -117,9 +117,9 @@ impl super::Rule for EnvironmentRule {
                         if t_col >= cols {
                             match self.boundaries.1 {
                                 // Perdiodic: Take the modulus.
-                                super::BoundaryBehaviour::PeriodicBoundary => t_col %= cols,
+                                super::BoundaryBehaviour::Periodic => t_col %= cols,
                                 // Symbol: Set the buffer to a fixed element.
-                                super::BoundaryBehaviour::BoundarySymbol(symbol) => {
+                                super::BoundaryBehaviour::Symbol(symbol) => {
                                     buffer[row_del][col_del] = symbol;
                                     done = true;
                                 }
@@ -130,9 +130,9 @@ impl super::Rule for EnvironmentRule {
                         if t_row >= rows {
                             match self.boundaries.0 {
                                 // Perdiodic: Take the modulus.
-                                super::BoundaryBehaviour::PeriodicBoundary => t_row %= rows,
+                                super::BoundaryBehaviour::Periodic => t_row %= rows,
                                 // Symbol: Set the buffer to a fixed element.
-                                super::BoundaryBehaviour::BoundarySymbol(symbol) => {
+                                super::BoundaryBehaviour::Symbol(symbol) => {
                                     buffer[row_del][col_del] = symbol;
                                     done = true;
                                 }
