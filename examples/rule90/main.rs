@@ -1,5 +1,7 @@
 /// This example implements the famous rule90 cellular automaton.
 fn main() {
+    simple_logger::init_with_level(log::Level::Info).unwrap();
+
     cellumina::AutomatonBuilder::new()
         // Generate a 64x64 initial state, with the first row having random values and the rest being empty
         // Each row will represent one time step of the automaton.
