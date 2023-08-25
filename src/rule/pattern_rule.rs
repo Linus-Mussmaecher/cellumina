@@ -12,15 +12,16 @@ use std::fmt::Display;
 pub struct PatternRule {
     /// The replacment patterns of this rule.
     pub(crate) patterns: Vec<Pattern>,
-    /// How the rule is supposed to handle cells at the edges of the state space.
-    /// The first item describes how to handle trying to access rows out of range, the second columns out of range.
-    pub(crate) boundaries: (BoundaryBehaviour, BoundaryBehaviour),
+    /// Describes the way the rule deals with attempts to match patterns that overlap rows out of bounds of the state grid.
+    pub(crate) row_boundary: BoundaryBehaviour,
+    /// Describes the way the rule deals with attempts to match patterns that overlap columns out of bounds of the state grid.
+    pub(crate) col_boundary: BoundaryBehaviour,
 }
 
 impl Display for PatternRule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{};\n\n", self.boundaries.0)?;
-        write!(f, "{};\n\n", self.boundaries.1)?;
+        write!(f, "{};\n\n", self.row_boundary)?;
+        write!(f, "{};\n\n", self.col_boundary)?;
         for pattern in self.patterns.iter() {
             writeln!(f, "{}", pattern)?;
         }
@@ -33,10 +34,9 @@ impl From<&str> for PatternRule {
         let mut vals = value.split(";\n\n");
 
         PatternRule {
-            boundaries: (
+            row_boundary: 
                 BoundaryBehaviour::from(vals.next().unwrap()),
-                BoundaryBehaviour::from(vals.next().unwrap()),
-            ),
+                col_boundary: BoundaryBehaviour::from(vals.next().unwrap()),
             patterns: vals
                 .filter(|val| !val.is_empty())
                 .map(Pattern::from)
@@ -212,10 +212,9 @@ impl PatternRule {
     pub fn new_empty() -> Self {
         Self {
             patterns: Vec::new(),
-            boundaries: (
+            row_boundary: 
                 BoundaryBehaviour::Symbol('_'),
-                BoundaryBehaviour::Symbol('_'),
-            ),
+                col_boundary: BoundaryBehaviour::Symbol('_'),
         }
     }
 
@@ -223,11 +222,12 @@ impl PatternRule {
     pub fn from_patterns(
         rules: &[Pattern],
         row_boundary: BoundaryBehaviour,
-        column_boundary: BoundaryBehaviour,
+        col_boundary: BoundaryBehaviour,
     ) -> Self {
         Self {
             patterns: rules.to_vec(),
-            boundaries: (row_boundary, column_boundary),
+            row_boundary,
+            col_boundary,
         }
     }
 }
@@ -246,14 +246,14 @@ impl Rule for PatternRule {
             .filter_map(|pattern| {
                 let mut partial_res = Vec::new();
 
-                let row_stop = match self.boundaries.0 {
+                let row_stop = match self.row_boundary {
                     BoundaryBehaviour::Periodic => rows,
                     BoundaryBehaviour::Symbol(_)=> 
                         rows - pattern.before.rows() + 1
                     ,
                 };
 
-                let col_stop = match self.boundaries.1 {
+                let col_stop = match self.col_boundary {
                     BoundaryBehaviour::Periodic => cols,
                     BoundaryBehaviour::Symbol(_)=> 
                         cols - pattern.before.cols() + 1,

@@ -1,4 +1,5 @@
-boundaries = ["Periodic", "Periodic"]
+row_boundary = "Periodic"
+col_boundary = "Periodic"
 
 [[patterns]]
 chance = 1.0
