@@ -37,8 +37,6 @@ pub struct AutomatonBuilder {
 enum InitSource {
     /// No initial source, will result in an empty grid.
     None,
-    /// Allows the user to select a file that will be converted to a different init source and then initialized.
-    FilePicker(Box<dyn AsRef<std::path::Path>>),
     /// Initializes the character grid from the lines of a text file.
     TextFile(Box<dyn AsRef<std::path::Path>>),
     /// Initializes the character grid from an image file.
@@ -60,30 +58,6 @@ impl InitSource {
             InitSource::None => Err(crate::CelluminaError::CustomError(
                 "No source was provided for automaton initialization.".to_string(),
             )),
-            // File Picker -> Let user pick, then use another init method
-            InitSource::FilePicker(init_path) => {
-                let pathbuffer = native_dialog::FileDialog::new()
-                    .set_location(init_path.as_ref())
-                    .set_filename("cellumina_output")
-                    .add_filter("Text File", &["txt"])
-                    .add_filter("Image File", &["png", "jpeg", "ico", "bmp"])
-                    .add_filter("Any", &["*"])
-                    .show_open_single_file()?
-                    .ok_or(crate::CelluminaError::CustomError(
-                        "No source file was selected for automaton initialization.".to_string(),
-                    ))?;
-                match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
-                    Some("png") | Some("jpeg") | Some("ico") | Some("bmp") => {
-                        InitSource::ImageFile(Box::new(pathbuffer)).create_grid(colors)
-                    }
-                    Some("txt") | None | Some(_) => {
-                        log::info!(
-                            "Unrecognized File extension, attempting to read as plain text."
-                        );
-                        InitSource::TextFile(Box::new(pathbuffer)).create_grid(colors)
-                    }
-                }
-            }
             // Grid -> Directly return it back
             InitSource::Grid(grid) => Ok(grid),
             InitSource::TextFile(path) => {
@@ -154,10 +128,6 @@ impl std::fmt::Debug for InitSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::None => write!(f, "None"),
-            Self::FilePicker(arg0) => f
-                .debug_tuple("TextFile")
-                .field(&(*arg0.as_ref()).as_ref().to_str())
-                .finish(),
             Self::TextFile(arg0) => f
                 .debug_tuple("TextFile")
                 .field(&(*arg0.as_ref()).as_ref().to_str())
@@ -193,14 +163,6 @@ impl AutomatonBuilder {
     /// See also: [`automaton::Automaton::next_step()`].
     pub fn with_min_time_step(mut self, interval: std::time::Duration) -> Self {
         self.step_mode = automaton::StepMode::Limited { interval };
-        self
-    }
-
-    /// Use a file picker to supply the initial state of the automaton.
-    ///
-    /// Upon calling build, a file dialogue will open and prompt the user to select an appropriate file from which rules can be loaded (.txt or image file)
-    pub fn from_file_picker(mut self, initial_path: impl AsRef<std::path::Path> + 'static) -> Self {
-        self.source = InitSource::FilePicker(Box::new(initial_path));
         self
     }
 
