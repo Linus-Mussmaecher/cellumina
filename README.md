@@ -63,6 +63,7 @@ The [examples folder](https://github.com/Linus-Mussmaecher/cellumina/tree/master
 
  * ```game_of_life```: An implementation of conways game of life using environment rules.
  * ```sand```: A small falling sand simulation using pattern replacement rules to simulate falling sand, fire and ash.
+ * ```rule90```: A implementation of the [Rule 90](https://en.wikipedia.org/wiki/Rule_90) 1-dimensional cellular automaton that demonstrates how to use Cellumina's 2D-grid to display multiple successive states of a 1-dimensional automaton.
  * ```to_string```: An example that shows how to convert rules to and from the different string/file types.
 
  All examples can be run by cloning this repository with

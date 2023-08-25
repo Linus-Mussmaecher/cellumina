@@ -29,8 +29,8 @@ fn main() {
             boundaries: (
                 // Towards the top and bottom, we have a true boundary.
                 cellumina::rule::BoundaryBehaviour::Symbol('_'),
-                // Towards the left and right, we are pseudo-infinite with a periodic boundary.
-                cellumina::rule::BoundaryBehaviour::Periodic,
+                // Towards the left and right, we pretend there are always zeroes.
+                cellumina::rule::BoundaryBehaviour::Symbol('0'),
             ),
             cell_transform: |grid| {
                 // Top row (marked by the row above it containing only '_', the out-of-bounds-symbol) eternally keeps its value.
