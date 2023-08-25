@@ -36,17 +36,17 @@ impl Rule for MultiRule {
 pub enum BoundaryBehaviour {
     #[default]
     /// When trying to get a cell from an index outside of the state space, wrap around
-    PeriodicBoundary,
+    Periodic,
     /// When trying to get a cell from outside the state space, return '_' to indicate a wall.
     /// PatternRules will not check subareas that leave the state space.
-    BoundarySymbol(char),
+    Symbol(char),
 }
 
 impl Display for BoundaryBehaviour {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BoundaryBehaviour::PeriodicBoundary => write!(f, "Periodic"),
-            BoundaryBehaviour::BoundarySymbol(symbol) => write!(f, "Symbol:{symbol}"),
+            BoundaryBehaviour::Periodic => write!(f, "Periodic"),
+            BoundaryBehaviour::Symbol(symbol) => write!(f, "Symbol:{symbol}"),
         }
     }
 }
@@ -54,13 +54,13 @@ impl Display for BoundaryBehaviour {
 impl From<&str> for BoundaryBehaviour {
     fn from(value: &str) -> Self {
         match value {
-            "Periodic" => Self::PeriodicBoundary,
+            "Periodic" => Self::Periodic,
             value => {
                 let parts = value.split(':').collect::<Vec<&str>>();
                 if parts[0] == "Symbol" {
-                    Self::BoundarySymbol(parts[1].as_bytes()[0] as char)
+                    Self::Symbol(parts[1].as_bytes()[0] as char)
                 } else {
-                    Self::BoundarySymbol(' ')
+                    Self::Symbol(' ')
                 }
             }
         }

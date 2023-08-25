@@ -10,8 +10,8 @@ fn main() {
         .from_text_file("./examples/sand/sand_init.txt")
         // Define how the automoton deals with the boundaries of the state space.
         .with_pattern_edge_behaviour(
-            cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
-            cellumina::rule::BoundaryBehaviour::BoundarySymbol('_'),
+            cellumina::rule::BoundaryBehaviour::Symbol('_'),
+            cellumina::rule::BoundaryBehaviour::Symbol('_'),
         )
         // Now specify the patters we want to use to transform our state.
         .with_patterns(&vec![

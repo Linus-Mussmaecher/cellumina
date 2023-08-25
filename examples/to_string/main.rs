@@ -22,8 +22,8 @@ fn main() {
                 after: grid::grid![[' ', ' ']['X', 'X']],
             },
         ],
-        cellumina::rule::BoundaryBehaviour::PeriodicBoundary,
-        cellumina::rule::BoundaryBehaviour::PeriodicBoundary,
+        cellumina::rule::BoundaryBehaviour::Periodic,
+        cellumina::rule::BoundaryBehaviour::Periodic,
     );
 
     // Rules can be converted to strings.

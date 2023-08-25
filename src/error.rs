@@ -6,7 +6,6 @@ pub enum CelluminaError {
     IndexOutOfBoundsError(u32, u32, u32, u32),
     IOError(std::io::Error),
     ImageError(image::error::ImageError),
-    DialogError(native_dialog::Error),
 }
 
 impl std::fmt::Display for CelluminaError {
@@ -25,7 +24,6 @@ impl std::fmt::Display for CelluminaError {
             }
             CelluminaError::IOError(e) => e.fmt(f),
             CelluminaError::ImageError(e) => e.fmt(f),
-            CelluminaError::DialogError(e) => e.fmt(f),
         }
     }
 }
@@ -39,11 +37,5 @@ impl From<std::io::Error> for CelluminaError {
 impl From<image::error::ImageError> for CelluminaError {
     fn from(value: image::error::ImageError) -> Self {
         Self::ImageError(value)
-    }
-}
-
-impl From<native_dialog::Error> for CelluminaError {
-    fn from(value: native_dialog::Error) -> Self {
-        Self::DialogError(value)
     }
 }
