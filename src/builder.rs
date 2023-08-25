@@ -58,12 +58,11 @@ impl InitSource {
         match self {
             // No source -> empty grid
             InitSource::None => Err(crate::CelluminaError::CustomError(
-                "No source was provided for automaton initialization. Falling back to empty grid."
-                    .to_string(),
+                "No source was provided for automaton initialization.".to_string(),
             )),
             // File Picker -> Let user pick, then use another init method
             InitSource::FilePicker(init_path) => {
-                let pathbuffer =  native_dialog::FileDialog::new()
+                let pathbuffer = native_dialog::FileDialog::new()
                     .set_location(init_path.as_ref())
                     .set_filename("cellumina_output")
                     .add_filter("Text File", &["txt"])
@@ -71,7 +70,7 @@ impl InitSource {
                     .add_filter("Any", &["*"])
                     .show_open_single_file()?
                     .ok_or(crate::CelluminaError::CustomError(
-                        "No source file was selected for automaton initialization. Falling back to empty grid.".to_string()
+                        "No source file was selected for automaton initialization.".to_string(),
                     ))?;
                 match pathbuffer.extension().and_then(std::ffi::OsStr::to_str) {
                     Some("png") | Some("jpeg") | Some("ico") | Some("bmp") => {
@@ -88,6 +87,7 @@ impl InitSource {
             // Grid -> Directly return it back
             InitSource::Grid(grid) => Ok(grid),
             InitSource::TextFile(path) => {
+                log::info!("Initializing automaton state from text file.");
                 // read file
                 let content = std::fs::read_to_string(path.as_ref())?;
                 // split into lines
@@ -116,6 +116,7 @@ impl InitSource {
                 Ok(grid)
             }
             InitSource::ImageBuffer(buffer) => {
+                log::info!("Initializing automaton state from image buffer.");
                 let mut grid = grid::Grid::new(
                     buffer.dimensions().1 as usize,
                     buffer.dimensions().0 as usize,
@@ -307,7 +308,7 @@ impl AutomatonBuilder {
                 .create_grid(&self.colors)
                 .unwrap_or_else(|err| {
                     log::error!(
-                        "Encountered error while attempting to initialize automaton state:\n{err}"
+                        "Encountered error while attempting to initialize automaton state. Falling back to empty 16x16 grid. Error:\n{err}"
                     );
                     grid::Grid::new(16, 16)
                 }),
