@@ -11,7 +11,8 @@ use crate::CellGrid;
 /// let rule = cellumina::rule::EnvironmentRule {
 ///     row_range: 1,
 ///     col_range: 1,
-///     boundaries: (cellumina::rule::BoundaryBehaviour::Periodic, cellumina::rule::BoundaryBehaviour::Periodic),
+///     row_boundary: cellumina::rule::BoundaryBehaviour::Periodic,
+///     col_boundary: cellumina::rule::BoundaryBehaviour::Periodic,
 ///     cell_transform: |env: &cellumina::CellGrid| match env
 ///     // Iterate over neighbors.
 ///         .iter()
@@ -62,7 +63,8 @@ pub struct EnvironmentRule {
     pub col_range: usize,
     /// How the rule is supposed to handle cells at the edges of the state space.
     /// The first item describes how to handle trying to access rows out of range, the second columns out of range.
-    pub boundaries: (super::BoundaryBehaviour, super::BoundaryBehaviour),
+    pub row_boundary: super::BoundaryBehaviour,
+    pub col_boundary: super::BoundaryBehaviour,
     /// The function that calculates the next state of a single cell based on its environment.
     ///
     /// Receives a grid of size ```2 * row_range + 1``` x ```2 * col_range + 1```. Must return a character.
@@ -75,7 +77,8 @@ impl Default for EnvironmentRule {
         Self {
             row_range: Default::default(),
             col_range: Default::default(),
-            boundaries: Default::default(),
+            row_boundary: Default::default(),
+            col_boundary: Default::default(),
             cell_transform: |_| ' ',
         }
     }
@@ -115,7 +118,7 @@ impl super::Rule for EnvironmentRule {
                         // The < 0 case is handled because we are performing a wrapping sub.
                         // This might be error-prone if rows is close to the maximum value of a usize.
                         if t_col >= cols {
-                            match self.boundaries.1 {
+                            match self.col_boundary {
                                 // Perdiodic: Take the modulus.
                                 super::BoundaryBehaviour::Periodic => t_col %= cols,
                                 // Symbol: Set the buffer to a fixed element.
@@ -128,7 +131,7 @@ impl super::Rule for EnvironmentRule {
 
                         // Do the same for rows. Doing rows later ensures the boundary symbol of rows takes precedence if need be.
                         if t_row >= rows {
-                            match self.boundaries.0 {
+                            match self.row_boundary {
                                 // Perdiodic: Take the modulus.
                                 super::BoundaryBehaviour::Periodic => t_row %= rows,
                                 // Symbol: Set the buffer to a fixed element.

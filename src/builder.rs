@@ -230,9 +230,10 @@ impl AutomatonBuilder {
     pub fn with_pattern_edge_behaviour(
         mut self,
         row_boundary: rule::BoundaryBehaviour,
-        column_boundary: rule::BoundaryBehaviour,
+        col_boundary: rule::BoundaryBehaviour,
     ) -> Self {
-        self.pattern_rule.boundaries = (row_boundary, column_boundary);
+        self.pattern_rule.row_boundary = row_boundary;
+        self.pattern_rule.col_boundary = col_boundary;
         self
     }
 
@@ -246,8 +247,6 @@ impl AutomatonBuilder {
         self.rules.push(Box::new(rule));
         self
     }
-
-    // TODO: rules from file
 
     /// Adds a color mapping to this automaton.
     /// Cells containing the character ```cell``` will be displayed as color ```color```.
