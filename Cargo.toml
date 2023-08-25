@@ -18,11 +18,13 @@ rayon = "1.7"
 grid = "0.10"
 rand = "0.8"
 image = "0.24"
+# serde
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.7"
+
 # logging
 log = "0.4"
 simple_logger = {version = "4.2", optional = true}
-# serde
-serde = { version = "1.0", features = ["derive"] }
 
 # display dependencies
 winit = {version = "0.28", optional = true}
@@ -30,10 +32,6 @@ wgpu = {version = "0.17", optional = true}
 pollster = {version = "0.3", optional = true}
 bytemuck = { version = "1.13.1", features = [ "derive" ], optional=true }
 native-dialog = {version =  "0.6", optional = true}
-
-[dev-dependencies]
-env_logger = "0.10"
-toml = "0.7"
 
 [features]
 display = ["dep:winit", "dep:wgpu", "dep:pollster", "dep:bytemuck", "dep:native-dialog"]
