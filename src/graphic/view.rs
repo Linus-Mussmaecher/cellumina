@@ -43,6 +43,8 @@ impl AutomatonView {
         // |                                                             |
         // +-------------------------------------------------------------+
 
+        log::info!("Starting WGPU setup");
+
         // steal window size
         let size = window.inner_size();
 
@@ -116,8 +118,12 @@ impl AutomatonView {
         // |                                                             |
         // +-------------------------------------------------------------+
 
+        log::info!("Creating shader.");
+
         // create & compile the shaders
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+
+        log::info!("Creating render pipeline.");
 
         // create the pipeline
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -163,6 +169,8 @@ impl AutomatonView {
             },
             multiview: None,
         });
+
+        log::info!("Creating vertex & index buffers.");
 
         // create the buffer
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

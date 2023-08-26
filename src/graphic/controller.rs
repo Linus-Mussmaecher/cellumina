@@ -63,6 +63,7 @@ impl AutomatonController {
                 match virtual_keycode {
                     // S: If control is down, try to save
                     Some(winit::event::VirtualKeyCode::S) if self.ctrl_down => {
+                        log::info!("Attempting to save current state to file.");
                         let (rows, cols) = model.cell_state.state.size();
                         match native_dialog::FileDialog::new()
                             .set_location("~")
@@ -126,12 +127,17 @@ impl AutomatonController {
                     }
                     // Return pauses and unpauses.
                     Some(winit::event::VirtualKeyCode::Return) => {
+                        log::info!(
+                            "Model simulation {}.",
+                            if model.paused { "unpaused" } else { "paused" }
+                        );
                         model.paused = !model.paused;
                         true
                     }
                     // All other chars (including S): Set the replacement char
                     Some(code) => {
                         self.replacement_char = self.keymap.get(code).copied().unwrap_or(' ');
+                        log::info!("Replacement Character set to {}.", self.replacement_char);
                         true
                     }
                     // Else, do nothing

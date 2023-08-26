@@ -23,6 +23,8 @@ use crate::automaton;
 pub(crate) async fn run_live(automaton: automaton::Automaton) {
     let event_loop = EventLoop::new();
 
+    log::info!("Starting window initialization.");
+
     let window = WindowBuilder::new()
         .with_inner_size(winit::dpi::Size::Physical(winit::dpi::PhysicalSize {
             width: 630,
@@ -34,8 +36,17 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
         .build(&event_loop)
         .expect("Could not init window.");
 
+    log::info!("Created window.");
+
     let (mut view, mut model) = AutomatonView::create_view_model(window, automaton).await;
+
+    log::info!("Created view and model.");
+
     let mut controller = AutomatonController::new();
+
+    log::info!("Created controller.");
+
+    log::info!("Initializing event loop. Starting simulation.");
 
     event_loop.run(move |event, _event_loop_window_target, control_flow| {
         match event {

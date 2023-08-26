@@ -268,6 +268,10 @@ impl AutomatonBuilder {
 
     /// Completes the build process and produces an [cellular automaton](automaton::Automaton) as specified.
     pub fn build(mut self) -> automaton::Automaton {
+        log::debug!(
+            "Building automaton from the following parameters: {:?}",
+            &self
+        );
         automaton::Automaton {
             state: std::mem::replace(&mut self.source, InitSource::None)
                 .create_grid(&self.colors)
@@ -279,12 +283,17 @@ impl AutomatonBuilder {
                 }),
             rule: {
                 if !self.pattern_rule.patterns.is_empty() {
+                    log::info!("Patterns were supplied to builder, initialization will use presupplied pattern rule.");
                     self.rules.push(Box::new(self.pattern_rule));
+                } else {
+                    log::info!("No patterns were supplied to builder, presupplied pattern rule will be discarded.");
                 }
 
                 if self.rules.len() == 1 {
+                    log::info!("Initializing automaton with a single rule.");
                     self.rules.pop().unwrap()
                 } else {
+                    log::info!("Initializing automaton with {} rules, wrapping in MultiRule.", self.rules.len());
                     Box::new(rule::MultiRule { rules: self.rules })
                 }
             },
