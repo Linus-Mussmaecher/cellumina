@@ -41,10 +41,13 @@ pub(crate) async fn run_live(automaton: automaton::Automaton) {
     let (mut view, mut model) = AutomatonView::create_view_model(window, automaton).await;
 
     log::info!("Created view and model.");
+    log::debug!("Model: {:?}", model);
+    log::debug!("View: {:?}", view);
 
     let mut controller = AutomatonController::new();
 
     log::info!("Created controller.");
+    log::debug!("Controller: {:?}", controller);
 
     log::info!("Initializing event loop. Starting simulation.");
 
