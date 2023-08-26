@@ -253,6 +253,7 @@ dependencies = [
  "rayon",
  "serde",
  "simple_logger",
+ "thiserror",
  "toml",
  "wgpu",
  "winit",
