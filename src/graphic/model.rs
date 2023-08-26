@@ -29,6 +29,8 @@ impl AutomatonModel {
         cell_state: automaton::Automaton,
         device: &wgpu::Device,
     ) -> (Self, wgpu::BindGroupLayout, wgpu::BindGroup) {
+        log::info!("Creating cell state texture.");
+
         let cell_state_texture = device.create_texture(&wgpu::TextureDescriptor {
             // the size of the texture
             size: wgpu::Extent3d {
@@ -66,6 +68,8 @@ impl AutomatonModel {
             mipmap_filter: wgpu::FilterMode::Nearest,
             ..Default::default()
         });
+
+        log::info!("Creating cell state bind group.");
 
         let cell_state_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {

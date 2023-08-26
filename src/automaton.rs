@@ -54,6 +54,12 @@ impl Automaton {
     /// ## Error
     /// When the given index is out of bounds.
     pub fn set_cell(&mut self, row: u32, col: u32, new_val: char) -> Result<bool, CelluminaError> {
+        log::info!(
+            "Manual cell set: Character {} at ({}, {}).",
+            new_val,
+            row,
+            col
+        );
         if row >= self.state.size().0 as u32 || col >= self.state.size().1 as u32 {
             Err(CelluminaError::IndexOutOfBoundsError(
                 row,
