@@ -13,6 +13,8 @@
     - [Colors](./cellumina/colors.md)
     - [Time Steps and Displaying your automaton](./cellumina/display.md)
 
+---
+
 - [Examples](./examples.md)
     - [The Game Of Life](./examples/game_of_life.md)
     - [Falling Sand](./examples/sand.md)
@@ -23,3 +25,8 @@
     - [1-Dimensional Automata](./examples/oned.md)
         - [Rule 90](.examples/oned/rule90.md)
     - [Other Fun Stuff](./examples/other.md)
+
+
+---
+
+[Contributors & Sources](./sources.md)
