@@ -1,0 +1,6 @@
+[book]
+authors = ["Linus-Mussmaecher"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Cellumina - Cellular Automata in Rust"
