@@ -13,7 +13,7 @@ Cellular automata are mostly interesting from a purely mathematical perspective,
 While this is seldom efficient, the simple nature of such automata can be useful when researching theoretical models of computation.
 
 | |
-| - |
+| :-: |
 | ![Game Of Life](automata_game_of_life.png) | 
 | *A state in the famous _Game Of Life_ automaton, one of the first cellular automatons to be extensively studied.* |
 | ![Rule 90](automata_rule90.png) |
