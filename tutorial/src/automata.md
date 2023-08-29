@@ -12,9 +12,10 @@ The only constraint is that it must be a function taking in a state grid and ret
 Cellular automata are mostly interesting from a purely mathematical perspective, but some of them can use the evolution of their state to solve certain computational problems.
 While this is seldom efficient, the simple nature of such automata can be useful when researching theoretical models of computation.
 
+| |
+| - |
+| ![Game Of Life](automata_game_of_life.png) | 
+| *A state in the famous _Game Of Life_ automaton, one of the first cellular automatons to be extensively studied.* |
+| ![Rule 90](automata_rule90.png) |
+| *Multiple states of the one-dimensional _Rule90_ automaton. Each row, from the top to the bottom, represents a state of the automaton.* |
 
-![Game of Life](automata_game_of_life.png)
-A state in the famous _Game Of Life_ automaton, one of the first cellular automatons to be extensively studied.
-
-![Rule 90](automata_rule90.png)
-Multiple states of the one-dimensional _Rule90_ automaton. Each row, from the top to the bottom, represents a state of the automaton.
