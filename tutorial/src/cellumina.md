@@ -23,3 +23,19 @@ The builder can then be augmented by initializing state and progression rule(s) 
 ```
 
 Don't worry about these functions yet, we will go over them in the following chapters in greater detail.
+
+Most of the code examples you will see are excerpts from the [examples].
+You can run them by cloning the cellumina repo 
+```bash
+    git clone https://github.com/Linus-Mussmaecher/cellumina
+```
+and running 
+```bash
+    cargo run --examples <name> --features="display"
+```
+in the created repository. Example:
+```bash
+    cargo run --examples sand --features="display"
+```
+
+[examples]: https://github.com/Linus-Mussmaecher/cellumina/tree/master/examples
