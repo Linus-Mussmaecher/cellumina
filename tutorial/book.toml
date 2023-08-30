@@ -7,7 +7,3 @@ title = "Cellumina - Cellular Automata in Rust"
 
 [rust]
 edition = "2021"
-
-
-[output.html]
-additional-css = ["imagecaptions.css"]
