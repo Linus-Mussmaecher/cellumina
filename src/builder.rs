@@ -310,3 +310,66 @@ impl Default for AutomatonBuilder {
         Self::new()
     }
 }
+
+#[test]
+fn builder_test() {
+    let auto1 = AutomatonBuilder::new()
+        .from_text_file("./examples/sand/sand_init.txt")
+        .with_pattern_edge_behaviour(
+            rule::BoundaryBehaviour::Symbol(126),
+            rule::BoundaryBehaviour::Periodic,
+        )
+        .with_pattern(rule::Pattern {
+            before: grid::grid![[59][0][0]],
+            after: grid::grid![[0][0][59]],
+            priority: 1.0,
+            chance: 0.9,
+        })
+        .with_min_time_step(std::time::Duration::from_secs_f32(0.5))
+        .build();
+
+    assert_eq!(auto1.last_step, None);
+    assert_eq!(
+        auto1.step_mode,
+        crate::automaton::StepMode::Limited {
+            interval: std::time::Duration::from_secs_f32(0.5)
+        }
+    );
+    assert_eq!(auto1.colors, HashMap::new());
+
+    let auto2 = AutomatonBuilder::new()
+        .from_image_file("./examples/game_of_life/gol_init5.png")
+        .with_rule(rule::EnvironmentRule {
+            // Each cell only cares about neighbors 1 field away, in every direction.
+            environment_size: [1, 1, 1, 1],
+            row_boundary: rule::BoundaryBehaviour::Symbol(0),
+            col_boundary: rule::BoundaryBehaviour::Symbol(0),
+            cell_transform: |env| match env
+                // Iterate over neighbors.
+                .iter().copied()
+                // Sum over these 9 values without the center
+                .sum::<u8>() - env[1][1]
+                // ... and map the sum to the new enty of our cell:
+            {
+                // 2 neighbors: The cell keeps its state.
+                2 => env[1][1],
+                // 3 neighbors: The cell gets born.
+                3 => 1,
+                // 0, 1 or more than 3 neighbors: The cell dies.
+                _ => 0,
+            },
+        })
+        .with_color(1, [95, 205, 228, 255])
+        .with_color(0, [3, 40, 50, 250])
+        .build();
+
+    assert_eq!(auto2.step_mode, crate::automaton::StepMode::Immediate);
+    assert_eq!(
+        auto2.colors,
+        HashMap::from([(1, [95, 205, 228, 255]), (0, [3, 40, 50, 250])])
+    );
+    assert_eq!(
+        auto2.state,
+        grid::grid![[1,0,1,0] [0,1,0,0] [0,0,0,0] [0,1,1,0]]
+    );
+}
