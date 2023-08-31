@@ -6,50 +6,6 @@ use crate::CellGrid;
 ///
 /// Note that each application of the ```cell_transform``` function will read from the entire untransformed array.
 /// Also, the environment will wrap around the grid edges.
-/// ```
-/// use cellumina::rule::Rule;
-/// let rule = cellumina::rule::EnvironmentRule {
-///     environment_size: [1,1,1,1],
-///     row_boundary: cellumina::rule::BoundaryBehaviour::Periodic,
-///     col_boundary: cellumina::rule::BoundaryBehaviour::Periodic,
-///     cell_transform: |env: &cellumina::CellGrid| match env
-///     // Iterate over neighbors.
-///         .iter()
-///         .enumerate()
-///         .map(|val| match val {
-///             // The cell we are transforming does not get counted.
-///             (4, 1) => 0,
-///             // Any cell containing an 1 counts for 1 (alive).
-///             (_, 1) => 1,
-///             // Any cell containing any other entry (only 0 in our initial configuration) counts as 0 (dead).
-///             _ => 0,
-///         })
-///         // Sum over these 9 values...
-///         .sum()
-///         // ... and map the sum to the new enty of our cell:
-///     {
-///         // 2 neighbors: The cell keeps its state.
-///         2 => env[1][1],
-///         // 3 neighbors: The cell gets born.
-///         3 => 1,
-///         // 0, 1 or more than 3 neighbors: The cell dies.
-///         _ => 0,
-///     },
-/// };
-/// let mut grid = grid::grid![[0, 0, 1, 0, 0][0, 0, 1,0, 0][0, 0, 0, 0, 0][0, 0, 1, 0, 0][0, 0, 1, 0, 0]];
-/// rule.transform(&mut grid);
-/// assert_eq!(
-///     grid,
-///     grid::grid![[0, 1, 1, 1, 0][0, 0, 0,0, 0][0, 0, 0, 0, 0][0, 0, 0, 0, 0][0, 1, 1, 1, 0]]
-/// );
-/// rule.transform(&mut grid);
-/// rule.transform(&mut grid);
-/// rule.transform(&mut grid);
-/// assert_eq!(
-///     grid,
-///     grid::grid![[0, 1, 0, 1, 0][0, 0, 1,0, 0][0, 0, 0, 0, 0][0, 0, 1, 0, 0][0, 1, 0, 1, 0]]
-/// );
-/// ```
 #[derive(Clone, Copy)]
 pub struct EnvironmentRule {
     /// The distance the considered environment extends from the cell to be set, in order ```[top, right, bottom, left]```.
@@ -166,4 +122,52 @@ impl super::Rule for EnvironmentRule {
 
         *grid = res;
     }
+}
+
+#[test]
+fn environment_test() {
+    use crate::rule;
+    use rule::Rule;
+    let rule = rule::EnvironmentRule {
+        environment_size: [1, 1, 1, 1],
+        row_boundary: rule::BoundaryBehaviour::Periodic,
+        col_boundary: rule::BoundaryBehaviour::Periodic,
+        cell_transform: |env: &CellGrid| match env
+     // Iterate over neighbors.
+         .iter()
+         .enumerate()
+         .map(|val| match val {
+             // The cell we are transforming does not get counted.
+             (4, 1) => 0,
+             // Any cell containing an 1 counts for 1 (alive).
+             (_, 1) => 1,
+             // Any cell containing any other entry (only 0 in our initial configuration) counts as 0 (dead).
+             _ => 0,
+         })
+         // Sum over these 9 values...
+         .sum()
+         // ... and map the sum to the new enty of our cell:
+     {
+         // 2 neighbors: The cell keeps its state.
+         2 => env[1][1],
+         // 3 neighbors: The cell gets born.
+         3 => 1,
+         // 0, 1 or more than 3 neighbors: The cell dies.
+         _ => 0,
+     },
+    };
+    let mut grid =
+        grid::grid![[0, 0, 1, 0, 0][0, 0, 1,0, 0][0, 0, 0, 0, 0][0, 0, 1, 0, 0][0, 0, 1, 0, 0]];
+    rule.transform(&mut grid);
+    assert_eq!(
+        grid,
+        grid::grid![[0, 1, 1, 1, 0][0, 0, 0,0, 0][0, 0, 0, 0, 0][0, 0, 0, 0, 0][0, 1, 1, 1, 0]]
+    );
+    rule.transform(&mut grid);
+    rule.transform(&mut grid);
+    rule.transform(&mut grid);
+    assert_eq!(
+        grid,
+        grid::grid![[0, 1, 0, 1, 0][0, 0, 1,0, 0][0, 0, 0, 0, 0][0, 0, 1, 0, 0][0, 1, 0, 1, 0]]
+    );
 }
