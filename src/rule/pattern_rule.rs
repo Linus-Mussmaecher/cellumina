@@ -62,33 +62,33 @@ impl From<&str> for PatternRule {
 ///         cellumina::rule::Pattern{
 ///             chance: 1.0,
 ///             priority: 1.0,
-///             before: grid::grid![['X'][' ']],
-///             after: grid::grid![[' ']['X']],
+///             before: grid::grid![[1][0]],
+///             after: grid::grid![[0][1]],
 ///         },
 ///         cellumina::rule::Pattern{
 ///             chance: 1.0,
 ///             priority: 0.5,
-///             before: grid::grid![[' ', 'X']['X', ' ']],
-///             after: grid::grid![['X', 'X'][' ', ' ']],
+///             before: grid::grid![[0, 1][1, 0]],
+///             after: grid::grid![[1, 1][0, 0]],
 ///         },
 ///     ],
-///     cellumina::rule::BoundaryBehaviour::Symbol('_'),
-///     cellumina::rule::BoundaryBehaviour::Symbol('_'),
+///     cellumina::rule::BoundaryBehaviour::Symbol(126),
+///     cellumina::rule::BoundaryBehaviour::Symbol(126),
 /// );
 ///
-/// let mut grid = grid::grid![[' ', 'X']['X', ' '][' ', ' ']];
+/// let mut grid = grid::grid![[0, 1][1, 0][0, 0]];
 /// rule.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[' ', ' '][' ', 'X']['X', ' ']]);
+/// assert_eq!(grid, grid::grid![[0, 0][0, 1][1, 0]]);
 /// rule.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[' ', ' '][' ', ' ']['X', 'X']]);
+/// assert_eq!(grid, grid::grid![[0, 0][0, 0][1, 1]]);
 ///
 /// let rule2 = cellumina::rule::PatternRule::from(rule.to_string().as_str());
 ///
-/// grid = grid::grid![[' ', 'X']['X', ' '][' ', ' ']];
+/// grid = grid::grid![[0, 1][1, 0][0, 0]];
 /// rule2.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[' ', ' '][' ', 'X']['X', ' ']]);
+/// assert_eq!(grid, grid::grid![[0, 0][0, 1][1, 0]]);
 /// rule2.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[' ', ' '][' ', ' ']['X', 'X']]);
+/// assert_eq!(grid, grid::grid![[0, 0][0, 0][1, 1]]);
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pattern {
@@ -109,8 +109,8 @@ impl Default for Pattern {
         Self {
             chance: 1.,
             priority: 0.,
-            before: grid::grid![['*']],
-            after: grid::grid![['*']],
+            before: grid::grid![[127]],
+            after: grid::grid![[127]],
         }
     }
 }
@@ -121,15 +121,15 @@ impl Display for Pattern {
         write!(f, "{};", self.priority)?;
         for row in self.before.iter_rows() {
             writeln!(f)?;
-            for b_cell in row {
-                write!(f, "{}", b_cell)?;
+            for &b_cell in row {
+                write!(f, "{}", crate::id_to_char(b_cell))?;
             }
         }
         write!(f, ";")?;
         for row in self.after.iter_rows() {
             writeln!(f)?;
-            for a_cell in row {
-                write!(f, "{}", a_cell)?;
+            for &a_cell in row {
+                write!(f, "{}", crate::id_to_char(a_cell))?;
             }
         }
         writeln!(f, ";")
@@ -140,8 +140,8 @@ impl Display for Pattern {
 /// let pattern = cellumina::rule::Pattern{
 ///             chance: 1.0,
 ///             priority: 1.0,
-///             before: grid::grid![[' ', ' ', 'X'][' ', 'X', 'X']],
-///             after: grid::grid![['*', '*', ' ']['X', '*', '*']],
+///             before: grid::grid![[0, 0, 1][0, 1, 1]],
+///             after: grid::grid![[127, 127, 0][1, 127, 127]],
 ///         };
 /// let pattern2 = cellumina::rule::Pattern::from(pattern.to_string().as_str());
 /// assert_eq!(pattern.chance, pattern2.chance);
@@ -170,7 +170,8 @@ impl From<&str> for Pattern {
                     lines
                         .iter()
                         .flat_map(|line| line.chars())
-                        .collect::<Vec<char>>(),
+                        .map(crate::char_to_id)
+                        .collect::<Vec<u8>>(),
                     lines[0].len(),
                 )
             },
@@ -180,7 +181,8 @@ impl From<&str> for Pattern {
                     lines
                         .iter()
                         .flat_map(|line| line.chars())
-                        .collect::<Vec<char>>(),
+                        .map(crate::char_to_id)
+                        .collect::<Vec<u8>>(),
                     lines[0].len(),
                 )
             },
@@ -213,8 +215,8 @@ impl PatternRule {
         Self {
             patterns: Vec::new(),
             row_boundary: 
-                BoundaryBehaviour::Symbol('_'),
-                col_boundary: BoundaryBehaviour::Symbol('_'),
+                BoundaryBehaviour::Symbol(126),
+                col_boundary: BoundaryBehaviour::Symbol(126),
         }
     }
 
@@ -234,7 +236,7 @@ impl PatternRule {
 
 /// A collection of replacement actions, containing a priority, a position (row/column) and a placement character.
 /// A pattern will always produce such a collection of replacements belonging together.
-type ReplacementCollection = Vec<Vec<(f32, usize, usize, char)>>;
+type ReplacementCollection = Vec<Vec<(f32, usize, usize, u8)>>;
 
 impl Rule for PatternRule {
     fn transform(&self, grid: &mut CellGrid) {
@@ -271,7 +273,7 @@ impl Rule for PatternRule {
                         // check if pattern is applicable
                         for row_del in 0..p_rows {
                             for col_del in 0..p_cols {
-                                if pattern.before[row_del][col_del] != '*'
+                                if pattern.before[row_del][col_del] != 127
                                 // do modulo in case we are wrapping - if edge behaviour is set to stop, this will never change anything
                                     && grid
                                         .get(row + row_del, col + col_del)
@@ -291,7 +293,7 @@ impl Rule for PatternRule {
                             for col_del in 0..p_cols {
                                 let rep = pattern.after[row_del][col_del];
                                 // make sure to not replace wild cards, and check edge behaviour
-                                if rep != '*' {
+                                if rep != 127 {
                                     // apply modulus to replacement coordinates to be sure
                                     rep_group.push((
                                         pattern.priority,

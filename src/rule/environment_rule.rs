@@ -18,10 +18,10 @@ use crate::CellGrid;
 ///         .enumerate()
 ///         .map(|val| match val {
 ///             // The cell we are transforming does not get counted.
-///             (4, 'X') => 0,
-///             // Any cell containing an 'X' counts for 1 (alive).
-///             (_, 'X') => 1,
-///             // Any cell containing any other entry (only ' ' in our initial configuration) counts as 0 (dead).
+///             (4, 1) => 0,
+///             // Any cell containing an 1 counts for 1 (alive).
+///             (_, 1) => 1,
+///             // Any cell containing any other entry (only 0 in our initial configuration) counts as 0 (dead).
 ///             _ => 0,
 ///         })
 ///         // Sum over these 9 values...
@@ -31,23 +31,23 @@ use crate::CellGrid;
 ///         // 2 neighbors: The cell keeps its state.
 ///         2 => env[1][1],
 ///         // 3 neighbors: The cell gets born.
-///         3 => 'X',
+///         3 => 1,
 ///         // 0, 1 or more than 3 neighbors: The cell dies.
-///         _ => ' ',
+///         _ => 0,
 ///     },
 /// };
-/// let mut grid = grid::grid![[' ', ' ', 'X', ' ', ' '][' ', ' ', 'X',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', 'X', ' ', ' '][' ', ' ', 'X', ' ', ' ']];
+/// let mut grid = grid::grid![[0, 0, 1, 0, 0][0, 0, 1,0, 0][0, 0, 0, 0, 0][0, 0, 1, 0, 0][0, 0, 1, 0, 0]];
 /// rule.transform(&mut grid);
 /// assert_eq!(
 ///     grid,
-///     grid::grid![[' ', 'X', 'X', 'X', ' '][' ', ' ', ' ',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', ' ', ' ', ' '][' ', 'X', 'X', 'X', ' ']]
+///     grid::grid![[0, 1, 1, 1, 0][0, 0, 0,0, 0][0, 0, 0, 0, 0][0, 0, 0, 0, 0][0, 1, 1, 1, 0]]
 /// );
 /// rule.transform(&mut grid);
 /// rule.transform(&mut grid);
 /// rule.transform(&mut grid);
 /// assert_eq!(
 ///     grid,
-///     grid::grid![[' ', 'X', ' ', 'X', ' '][' ', ' ', 'X',' ', ' '][' ', ' ', ' ', ' ', ' '][' ', ' ', 'X', ' ', ' '][' ', 'X', ' ', 'X', ' ']]
+///     grid::grid![[0, 1, 0, 1, 0][0, 0, 1,0, 0][0, 0, 0, 0, 0][0, 0, 1, 0, 0][0, 1, 0, 1, 0]]
 /// );
 /// ```
 #[derive(Clone, Copy)]
@@ -78,7 +78,7 @@ pub struct EnvironmentRule {
     /// Receives a grid of size ```(top + bottom + 1) * (left + right + 1)```, where ```[top, right, bottom, left]``` is the ```enviroment_size```.
     /// Must return a character.
     /// In the next iteration after applying this rule, the cell at position ```[top][left]```, with ```[0][0]``` being the top right, of the received grid will contain the return value of this function.
-    pub cell_transform: fn(&CellGrid) -> char,
+    pub cell_transform: fn(&CellGrid) -> u8,
 }
 
 impl Default for EnvironmentRule {
@@ -87,7 +87,7 @@ impl Default for EnvironmentRule {
             environment_size: [1, 1, 1, 1],
             row_boundary: Default::default(),
             col_boundary: Default::default(),
-            cell_transform: |_| ' ',
+            cell_transform: |_| 0,
         }
     }
 }
