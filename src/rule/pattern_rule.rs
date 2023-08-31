@@ -55,41 +55,6 @@ impl From<&str> for PatternRule {
 ///
 /// If multiple patterns are applicable within a time step, the one with higher priority will always be applied first.
 /// Only if no cell concerning the second pattern has been mutated, the second pattern will apply also.
-/// ```
-/// use cellumina::rule::Rule;
-/// let rule = cellumina::rule::PatternRule::from_patterns(
-///     &[
-///         cellumina::rule::Pattern{
-///             chance: 1.0,
-///             priority: 1.0,
-///             before: grid::grid![[1][0]],
-///             after: grid::grid![[0][1]],
-///         },
-///         cellumina::rule::Pattern{
-///             chance: 1.0,
-///             priority: 0.5,
-///             before: grid::grid![[0, 1][1, 0]],
-///             after: grid::grid![[1, 1][0, 0]],
-///         },
-///     ],
-///     cellumina::rule::BoundaryBehaviour::Symbol(126),
-///     cellumina::rule::BoundaryBehaviour::Symbol(126),
-/// );
-///
-/// let mut grid = grid::grid![[0, 1][1, 0][0, 0]];
-/// rule.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[0, 0][0, 1][1, 0]]);
-/// rule.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[0, 0][0, 0][1, 1]]);
-///
-/// let rule2 = cellumina::rule::PatternRule::from(rule.to_string().as_str());
-///
-/// grid = grid::grid![[0, 1][1, 0][0, 0]];
-/// rule2.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[0, 0][0, 1][1, 0]]);
-/// rule2.transform(&mut grid);
-/// assert_eq!(grid, grid::grid![[0, 0][0, 0][1, 1]]);
-/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pattern {
     /// The chance for the pattern to apply on a match.
@@ -135,28 +100,7 @@ impl Display for Pattern {
         writeln!(f, ";")
     }
 }
-/// ```
-/// use cellumina::rule::Rule;
-/// let pattern = cellumina::rule::Pattern{
-///             chance: 1.0,
-///             priority: 1.0,
-///             before: grid::grid![[0, 0, 1][0, 1, 1]],
-///             after: grid::grid![[127, 127, 0][1, 127, 127]],
-///         };
-/// let pattern2 = cellumina::rule::Pattern::from(pattern.to_string().as_str());
-/// assert_eq!(pattern.chance, pattern2.chance);
-/// assert_eq!(pattern.priority, pattern2.priority);
-/// assert_eq!(pattern.before.rows(), pattern2.before.rows());
-/// assert_eq!(pattern.before.cols(), pattern2.before.cols());
-/// assert_eq!(pattern.after.rows(), pattern2.after.rows());
-/// assert_eq!(pattern.after.cols(), pattern2.after.cols());
-/// for (c1, c2) in pattern.before.iter().zip(pattern2.before.iter()) {
-///     assert_eq!(*c1, *c2);
-/// }
-/// for (c1, c2) in pattern.after.iter().zip(pattern2.after.iter()) {
-///     assert_eq!(*c1, *c2);
-/// }
-/// ```
+
 impl From<&str> for Pattern {
     fn from(value: &str) -> Self {
         let parts = value.split(";\n").collect::<Vec<&str>>();
@@ -349,4 +293,67 @@ impl Rule for PatternRule {
             }
         }
     }
+}
+
+
+#[test]
+fn pattern_test(){
+    use crate::rule;
+    let pattern = rule::Pattern{
+                chance: 1.0,
+                priority: 1.0,
+                before: grid::grid![[0, 0, 1][0, 1, 1]],
+                after: grid::grid![[127, 127, 0][1, 127, 127]],
+            };
+    let pattern2 = rule::Pattern::from(pattern.to_string().as_str());
+    assert_eq!(pattern.chance, pattern2.chance);
+    assert_eq!(pattern.priority, pattern2.priority);
+    assert_eq!(pattern.before.rows(), pattern2.before.rows());
+    assert_eq!(pattern.before.cols(), pattern2.before.cols());
+    assert_eq!(pattern.after.rows(), pattern2.after.rows());
+    assert_eq!(pattern.after.cols(), pattern2.after.cols());
+    for (c1, c2) in pattern.before.iter().zip(pattern2.before.iter()) {
+        assert_eq!(*c1, *c2);
+    }
+    for (c1, c2) in pattern.after.iter().zip(pattern2.after.iter()) {
+        assert_eq!(*c1, *c2);
+    }
+}
+
+#[test]
+fn pattern_rule_test(){
+    use crate::rule;
+    use rule::Rule;
+    let rule = rule::PatternRule::from_patterns(
+        &[
+            rule::Pattern{
+                chance: 1.0,
+                priority: 1.0,
+                before: grid::grid![[1][0]],
+                after: grid::grid![[0][1]],
+            },
+            rule::Pattern{
+                chance: 1.0,
+                priority: 0.5,
+                before: grid::grid![[0, 1][1, 0]],
+                after: grid::grid![[1, 1][0, 0]],
+            },
+        ],
+        rule::BoundaryBehaviour::Symbol(126),
+        rule::BoundaryBehaviour::Symbol(126),
+    );
+
+    let mut grid = grid::grid![[0, 1][1, 0][0, 0]];
+    rule.transform(&mut grid);
+    assert_eq!(grid, grid::grid![[0, 0][0, 1][1, 0]]);
+    rule.transform(&mut grid);
+    assert_eq!(grid, grid::grid![[0, 0][0, 0][1, 1]]);
+
+    let rule2 = rule::PatternRule::from(rule.to_string().as_str());
+
+    grid = grid::grid![[0, 1][1, 0][0, 0]];
+    rule2.transform(&mut grid);
+    assert_eq!(grid, grid::grid![[0, 0][0, 1][1, 0]]);
+    rule2.transform(&mut grid);
+    assert_eq!(grid, grid::grid![[0, 0][0, 0][1, 1]]);
 }

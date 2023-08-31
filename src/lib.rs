@@ -106,10 +106,24 @@ pub type CellGrid = grid::Grid<u8>;
 
 /// Converts each character to its associated u8 value.
 ///
+/// ```
+///     # use cellumina::char_to_id;
+///     assert_eq!(char_to_id('0'), 0);
+///     assert_eq!(char_to_id('5'), 5);
+///     assert_eq!(char_to_id('b'), 11);
+///     assert_eq!(char_to_id('A'), 36);
+/// ```
 /// PREFERABLY RESERVED:
+///     0 - Used for space
 ///     126 - Default border symbol
 /// CERTAINLY RESERVED:
-///     127 - Pattern Rule wildcard=
+///     127 - Pattern Rule wildcard
+/// ```
+///     # use cellumina::char_to_id;
+///     assert_eq!(char_to_id(' '), 0);
+///     assert_eq!(char_to_id('*'), 127);
+///     assert_eq!(char_to_id('_'), 126);
+/// ```
 pub const fn char_to_id(symbol: char) -> u8 {
     match symbol {
         '0'..='9' => (symbol as u32 - 48) as u8,
@@ -123,6 +137,26 @@ pub const fn char_to_id(symbol: char) -> u8 {
 }
 
 /// Converts an u8 value to its associated character.
+/// ```
+///     # use cellumina::id_to_char;
+///     assert_eq!(id_to_char(0), ' ');
+///     assert_eq!(id_to_char(5), '5');
+///     assert_eq!(id_to_char(11), 'b');
+///     assert_eq!(id_to_char(36), 'A');
+/// ```
+///
+/// PREFERABLY RESERVED:
+///     0 - Used for space
+///     126 - Default border symbol _
+/// CERTAINLY RESERVED:
+///     127 - Pattern Rule wildcard *
+/// ```
+///     # use cellumina::id_to_char;
+///     assert_eq!(id_to_char(0), ' ');
+///     assert_ne!(id_to_char(0), '0');
+///     assert_eq!(id_to_char(127), '*');
+///     assert_eq!(id_to_char(126), '_');
+/// ```
 pub const fn id_to_char(id: u8) -> char {
     match id {
         0 => ' ',
