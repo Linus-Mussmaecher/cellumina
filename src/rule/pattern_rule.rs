@@ -297,7 +297,7 @@ impl Rule for PatternRule {
 
 
 #[test]
-fn pattern_test(){
+fn to_from_string_test(){
     use crate::rule;
     let pattern = rule::Pattern{
                 chance: 1.0,

@@ -19,7 +19,7 @@ pub struct Automaton {
 }
 
 /// Describes how often an [Automaton] executes its time step.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum StepMode {
     /// Time steps are performed on every call of the [Automaton::next_step] function.
     Immediate,
@@ -112,4 +112,50 @@ impl Automaton {
     pub fn run_live(self) {
         pollster::block_on(crate::graphic::run_live(self));
     }
+}
+
+#[test]
+fn automaton_test() {
+    let mut auto = Automaton {
+        state: grid::Grid::from_vec(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], 4),
+        rule: Box::new(rule::EnvironmentRule {
+            environment_size: [1, 1, 1, 1],
+            row_boundary: rule::BoundaryBehaviour::Symbol(0),
+            col_boundary: rule::BoundaryBehaviour::Symbol(0),
+            cell_transform: |env| match env
+                // Iterate over neighbors.
+                .iter().copied()
+                // Sum over these 9 values without the center
+                .sum::<u8>() - env[1][1]
+                // ... and map the sum to the new enty of our cell:
+            {
+                // 2 neighbors: The cell keeps its state.
+                2 => env[1][1],
+                // 3 neighbors: The cell gets born.
+                3 => 1,
+                // 0, 1 or more than 3 neighbors: The cell dies.
+                _ => 0,
+            },
+        }),
+        step_mode: StepMode::Immediate,
+        colors: HashMap::new(),
+        last_step: None,
+    };
+
+    for _ in 0..5 {
+        auto.next_step();
+    }
+
+    assert_eq!(
+        auto.state,
+        grid::Grid::from_vec(vec![0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0], 4)
+    );
+
+    auto.next_step();
+    assert_eq!(
+        auto.state,
+        grid::Grid::from_vec(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], 4)
+    );
+
+    assert_ne!(auto.last_step, None);
 }
