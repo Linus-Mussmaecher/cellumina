@@ -102,4 +102,63 @@ pub mod rule;
 
 /// A type for the underlying state of a cellular automaton.
 /// Each cell always has a character as a state in cellumina.
-pub type CellGrid = grid::Grid<char>;
+pub type CellGrid = grid::Grid<u8>;
+
+/// Converts each character to its associated u8 value.
+///
+/// PREFERABLY RESERVED:
+///     126 - Default border symbol
+/// CERTAINLY RESERVED:
+///     127 - Pattern Rule wildcard=
+pub const fn char_to_id(symbol: char) -> u8 {
+    match symbol {
+        '0'..='9' => (symbol as u32 - 48) as u8,
+        'a'..='z' => (symbol as u32 - 97 + 10) as u8,
+        'A'..='Z' => (symbol as u32 - 65 + 10 + 26) as u8,
+        '_' => 126,
+        '*' => 127,
+        ' ' => 0,
+        _ => 0,
+    }
+}
+
+/// Converts an u8 value to its associated character.
+pub const fn id_to_char(id: u8) -> char {
+    match id {
+        0 => ' ',
+        1..=9 => (id + 48) as char,
+        10..=35 => (id + 97 - 10) as char,
+        36..=63 => (id + 65 - 10 - 26) as char,
+        126 => '_',
+        127 => '*',
+        _ => ' ',
+    }
+}
+
+#[test]
+fn conversion_test() {
+    assert_eq!(
+        ('0'..='9').map(char_to_id).collect::<Vec<u8>>(),
+        (0..10).collect::<Vec<u8>>()
+    );
+    assert_eq!(
+        ('a'..='z').map(char_to_id).collect::<Vec<u8>>(),
+        (10..36).collect::<Vec<u8>>()
+    );
+    assert_eq!(
+        ('A'..='Z').map(char_to_id).collect::<Vec<u8>>(),
+        (36..62).collect::<Vec<u8>>()
+    );
+    assert_eq!(
+        (1..10).map(id_to_char).collect::<Vec<char>>(),
+        ('1'..='9').collect::<Vec<char>>()
+    );
+    assert_eq!(
+        (10..36).map(id_to_char).collect::<Vec<char>>(),
+        ('a'..='z').collect::<Vec<char>>()
+    );
+    assert_eq!(
+        (36..62).map(id_to_char).collect::<Vec<char>>(),
+        ('A'..='Z').collect::<Vec<char>>()
+    );
+}

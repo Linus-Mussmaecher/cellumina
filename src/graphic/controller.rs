@@ -31,7 +31,7 @@ impl AutomatonController {
             if let Some((row, col)) = self.hovered_cell {
                 return model
                     .cell_state
-                    .set_cell(row, col, self.replacement_char)
+                    .set_cell(row, col, crate::char_to_id(self.replacement_char))
                     .unwrap_or_else(|err| {
                         log::error!("Could not set cell state: {}.", err);
                         false
@@ -102,7 +102,7 @@ impl AutomatonController {
                                                         if container.len() % (cols + 1) == cols {
                                                             container.push('\n');
                                                         }
-                                                        container.push(cell);
+                                                        container.push(crate::id_to_char(cell));
                                                         container
                                                     },
                                                 ),

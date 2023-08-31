@@ -29,7 +29,7 @@ pub struct AutomatonBuilder {
     pattern_rule: rule::PatternRule,
     rules: Vec<Box<dyn rule::Rule>>,
     source: InitSource,
-    colors: HashMap<char, [u8; 4]>,
+    colors: HashMap<u8, [u8; 4]>,
     step_mode: automaton::StepMode,
 }
 
@@ -49,10 +49,7 @@ enum InitSource {
 
 impl InitSource {
     /// Turns an init source into a fully initialized CellGrid.
-    fn create_grid(
-        self,
-        colors: &HashMap<char, [u8; 4]>,
-    ) -> Result<CellGrid, crate::CelluminaError> {
+    fn create_grid(self, colors: &HashMap<u8, [u8; 4]>) -> Result<CellGrid, crate::CelluminaError> {
         match self {
             // No source -> empty grid
             InitSource::None => Err(crate::CelluminaError::CustomError(
@@ -75,14 +72,18 @@ impl InitSource {
                     .unwrap_or_default();
 
                 // create grid to hold data
-                let mut grid = grid::Grid::<char>::new(0, cols);
+                let mut grid = grid::Grid::<u8>::new(0, cols);
 
                 // iterate over lines and add them to the grid
                 for line in lines {
                     // create char vector
-                    let mut chars: Vec<char> = line.replace('\r', "").chars().collect();
+                    let mut chars: Vec<u8> = line
+                        .replace('\r', "")
+                        .chars()
+                        .map(crate::char_to_id)
+                        .collect();
                     // make sure vector is neither to large nor to small
-                    chars.resize(cols, ' ');
+                    chars.resize(cols, 0);
                     // push to the grid
                     grid.push_row(chars);
                 }
@@ -108,7 +109,7 @@ impl InitSource {
                                 }
                             })
                             .copied()
-                            .unwrap_or(' ')
+                            .unwrap_or(0)
                     }
                 }
 
@@ -205,10 +206,10 @@ impl AutomatonBuilder {
     /// Use a vector to supply the initial state of the automaton.
     /// The automaton will have as many columns as specified and as many rows as the vector can fill, ```ceil(vec.len() / columns)``` many.
     /// If the vector can't fully fill the last row, it will be padded with spaces.
-    pub fn from_vec(mut self, mut vec: Vec<char>, columns: u32) -> Self {
+    pub fn from_vec(mut self, mut vec: Vec<u8>, columns: u32) -> Self {
         vec.resize(
             vec.len().checked_div(columns as usize).unwrap_or(0) * (columns as usize),
-            ' ',
+            0,
         );
         self.source = InitSource::Grid(grid::Grid::from_vec(vec, columns as usize));
         self
@@ -251,7 +252,7 @@ impl AutomatonBuilder {
     /// Adds a color mapping to this automaton.
     /// Cells containing the character ```cell``` will be displayed as color ```color```.
     /// These colors are also used when converting to and from image buffers.
-    pub fn with_color(mut self, cell: char, color: [u8; 4]) -> Self {
+    pub fn with_color(mut self, cell: u8, color: [u8; 4]) -> Self {
         self.colors.insert(cell, color);
         self
     }
@@ -259,7 +260,7 @@ impl AutomatonBuilder {
     /// Adds multiple color mappings at once.
     /// Cells containing the character ```key``` will be displayed as color ```colors[key]```.
     /// These colors are also used when converting to and from image buffers.
-    pub fn with_colors(mut self, colors: HashMap<char, [u8; 4]>) -> Self {
+    pub fn with_colors(mut self, colors: HashMap<u8, [u8; 4]>) -> Self {
         self.colors.extend(colors);
         self
     }

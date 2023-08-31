@@ -6,20 +6,20 @@ fn main() {
             cellumina::rule::Pattern {
                 chance: 1.0,
                 priority: 1.0,
-                before: grid::grid![['X'][' ']],
-                after: grid::grid![[' ']['X']],
+                before: grid::grid![[1][0]],
+                after: grid::grid![[0][1]],
             },
             cellumina::rule::Pattern {
                 chance: 0.8,
                 priority: 0.5,
-                before: grid::grid![['X', ' ']['X', ' ']],
-                after: grid::grid![[' ', ' ']['X', 'X']],
+                before: grid::grid![[1, 0][1, 0]],
+                after: grid::grid![[0, 0][1, 1]],
             },
             cellumina::rule::Pattern {
                 chance: 0.8,
                 priority: 0.5,
-                before: grid::grid![[' ', 'X'][' ', 'X']],
-                after: grid::grid![[' ', ' ']['X', 'X']],
+                before: grid::grid![[0, 1][0, 1]],
+                after: grid::grid![[0, 0][1, 1]],
             },
         ],
         cellumina::rule::BoundaryBehaviour::Periodic,
@@ -62,16 +62,16 @@ fn main() {
         .from_text_file("./examples/sand/sand_init.txt")
         // Set the colors again
         .with_colors(std::collections::HashMap::from([
-            // space is nothing, so well use a soft blue as our background.
-            (' ', [61, 159, 184, 255]),
+            // L is nothing, so well use a soft blue as our background.
+            (cellumina::char_to_id(' '), [61, 159, 184, 255]),
             // Sand
-            ('X', [224, 210, 159, 255]),
+            (cellumina::char_to_id('X'), [224, 210, 159, 255]),
             // Fire
-            ('F', [224, 105, 54, 255]),
+            (cellumina::char_to_id('F'), [224, 105, 54, 255]),
             // Ash
-            ('A', [184, 182, 182, 255]),
+            (cellumina::char_to_id('A'), [184, 182, 182, 255]),
             // The Source
-            ('S', [128, 25, 14, 255]),
+            (cellumina::char_to_id('S'), [128, 25, 14, 255]),
         ]))
         // Set a time step.
         .with_min_time_step(std::time::Duration::from_secs_f32(0.1))

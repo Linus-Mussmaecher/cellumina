@@ -6,11 +6,11 @@ chance = 1.0
 priority = 1.0
 
 [patterns.before]
-data = ["X", " "]
+data = [1, 0]
 cols = 1
 
 [patterns.after]
-data = [" ", "X"]
+data = [0, 1]
 cols = 1
 
 [[patterns]]
@@ -18,11 +18,11 @@ chance = 0.800000011920929
 priority = 0.5
 
 [patterns.before]
-data = ["X", " ", "X", " "]
+data = [1, 0, 1, 0]
 cols = 2
 
 [patterns.after]
-data = [" ", " ", "X", "X"]
+data = [0, 0, 1, 1]
 cols = 2
 
 [[patterns]]
@@ -30,9 +30,9 @@ chance = 0.800000011920929
 priority = 0.5
 
 [patterns.before]
-data = [" ", "X", " ", "X"]
+data = [0, 1, 0, 1]
 cols = 2
 
 [patterns.after]
-data = [" ", " ", "X", "X"]
+data = [0, 0, 1, 1]
 cols = 2

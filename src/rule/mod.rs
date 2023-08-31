@@ -39,14 +39,14 @@ pub enum BoundaryBehaviour {
     Periodic,
     /// When trying to get a cell from outside the state grid, return '_' to indicate a wall.
     /// [PatternRule] will simply not check subareas that leave the state grid.
-    Symbol(char),
+    Symbol(u8),
 }
 
 impl Display for BoundaryBehaviour {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             BoundaryBehaviour::Periodic => write!(f, "Periodic"),
-            BoundaryBehaviour::Symbol(symbol) => write!(f, "Symbol:{symbol}"),
+            BoundaryBehaviour::Symbol(symbol) => write!(f, "Symbol:{}", crate::id_to_char(*symbol)),
         }
     }
 }
@@ -58,9 +58,9 @@ impl From<&str> for BoundaryBehaviour {
             value => {
                 let parts = value.split(':').collect::<Vec<&str>>();
                 if parts[0] == "Symbol" {
-                    Self::Symbol(parts[1].as_bytes()[0] as char)
+                    Self::Symbol(crate::char_to_id(parts[1].as_bytes()[0] as char))
                 } else {
-                    Self::Symbol(' ')
+                    Self::Symbol(126)
                 }
             }
         }

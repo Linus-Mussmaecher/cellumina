@@ -13,7 +13,7 @@ pub struct Automaton {
     /// How often and on what conditions this automaton applies its rule set to its state to get to the next step.
     pub(super) step_mode: StepMode,
     /// The colors this automaton uses to convert itself to an image.
-    pub(super) colors: HashMap<char, [u8; 4]>,
+    pub(super) colors: HashMap<u8, [u8; 4]>,
     /// The time at which the automaton was created or the last step was performed.
     pub(super) last_step: Option<time::Instant>,
 }
@@ -53,7 +53,7 @@ impl Automaton {
     /// Sets the cell at the specified indices to the specified character.
     /// ## Error
     /// When the given index is out of bounds.
-    pub fn set_cell(&mut self, row: u32, col: u32, new_val: char) -> Result<bool, CelluminaError> {
+    pub fn set_cell(&mut self, row: u32, col: u32, new_val: u8) -> Result<bool, CelluminaError> {
         log::info!(
             "Manual cell set: Character {} at ({}, {}).",
             new_val,
@@ -99,7 +99,7 @@ impl Automaton {
                     // log::info!(
                     //     "Performed time step in {}s.",
                     //     before.elapsed().as_secs_f32()
-                    // )
+                    // );
                 }
                 step_permitted
             }
