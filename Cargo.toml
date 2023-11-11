@@ -54,3 +54,8 @@ required-features = ["display"]
 [[example]]
 name = "rule90"
 required-features = ["display", "simple_logger"]
+
+
+[[example]]
+name = "rps"
+required-features = ["display"]
