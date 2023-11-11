@@ -42,6 +42,12 @@ pub enum BoundaryBehaviour {
     Symbol(u8),
 }
 
+impl BoundaryBehaviour {
+    pub fn blocking_boundary() -> Self {
+        Self::Symbol(126)
+    }
+}
+
 impl Display for BoundaryBehaviour {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
