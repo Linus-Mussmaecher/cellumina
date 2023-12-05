@@ -62,4 +62,4 @@ required-features = ["display"]
 
 [[example]]
 name = "various"
-required-features = ["display"]
+required-features = ["display", "simple_logger"]

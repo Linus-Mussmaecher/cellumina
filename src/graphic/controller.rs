@@ -7,6 +7,10 @@ pub(super) struct AutomatonController {
     mouse_down: bool,
     /// The current state of the Ctrl-Key
     ctrl_down: bool,
+    /// The current state of the Shift Key
+    alt_down: bool,
+    /// Wether a clear is currently queued up
+    clear_char: Option<char>,
     /// The char the currently hovered cell is replaced with on mouse click.
     replacement_char: char,
     /// The keymap used to convert from VirtualKeyCode to character
@@ -20,13 +24,15 @@ impl AutomatonController {
             hovered_cell: None,
             mouse_down: false,
             ctrl_down: false,
+            clear_char: None,
+            alt_down: false,
             replacement_char: 'X',
             keymap: get_keymap(),
         }
     }
 
     /// Modifies the passed model as orderd by the user input.
-    pub(crate) fn modify(&self, model: &mut super::AutomatonModel) -> bool {
+    pub(crate) fn modify(&mut self, model: &mut super::AutomatonModel) -> bool {
         if self.mouse_down {
             if let Some((row, col)) = self.hovered_cell {
                 return model
@@ -37,6 +43,12 @@ impl AutomatonController {
                         false
                     });
             }
+        }
+        // if a clear is queued, replace the entire state with that char
+        if let Some(replacement) = self.clear_char.take() {
+            model.cell_state.state.fill(crate::char_to_id(replacement));
+            log::info!("Cleared the screen with character {}.", replacement);
+            return true;
         }
         false
     }
@@ -137,16 +149,32 @@ impl AutomatonController {
                     // All other chars (including S): Set the replacement char
                     Some(code) => {
                         self.replacement_char = self.keymap.get(code).copied().unwrap_or(' ');
+
                         log::info!("Replacement Character set to {}.", self.replacement_char);
+
+                        // if alt is pressed, queue a screen clear with that character
+                        if self.alt_down {
+                            self.clear_char = self.keymap.get(code).copied();
+                            if self.clear_char.is_some() {
+                                log::info!(
+                                    "Screen clear queued with character {}.",
+                                    self.replacement_char
+                                );
+                            } else {
+                                log::warn!("Could not unwrap code {:?}", code);
+                            }
+                        }
+
                         true
                     }
                     // Else, do nothing
                     None => false,
                 }
             }
-            // Keep tabs on the CTRL key.
+            // Keep tabs on the CTRL and ALT key.
             winit::event::WindowEvent::ModifiersChanged(state) => {
-                std::mem::replace(&mut self.ctrl_down, state.ctrl()) != state.ctrl()
+                (std::mem::replace(&mut self.ctrl_down, state.ctrl()) != state.ctrl())
+                    | (std::mem::replace(&mut self.alt_down, state.alt()) != state.alt())
             }
             // Permantly know what cell the cursor is hovering
             winit::event::WindowEvent::CursorMoved { position, .. } => {

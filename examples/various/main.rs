@@ -4,6 +4,7 @@ fn main() {
 }
 
 fn tree() {
+    simple_logger::init_with_level(log::Level::Info).unwrap();
     let size = 128;
     cellumina::AutomatonBuilder::new()
         // Generate a size x size initial state, all being nothing.
