@@ -38,6 +38,8 @@ It will then take ownership of a configured automaton, run it by itself and disp
 This is useful when just playing around with cellular automata.
 
 The user can also directly change the state of cells. Press any (character or space) button, and then mouse clicks will replace the currently hovered cell with the pressed character.
+If you want to clear the whole screen and fill every cell with the same character, press ```Alt + <char>```.
+This works with all alphanumeric characters, but is currently not supported for space - you'll have to use ```Alt + 0``` instead.
 The automaton can also be paused and resumed with ```Enter```.
 The current state of the automaton can be saved to a file with ```Ctrl + S```, currently the following formats are supported: ```txt``` (with one row of chararcters per line) as well as ```png, jpeg, ico, bmp```. Normal restrictions of those files apply, e.g. saving to jpeg may result in compression, so ```.jpeg```-files are not suited for saving and reloading automata.
 
