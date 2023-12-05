@@ -11,12 +11,13 @@ fn tree() {
         .from_vec(vec![0; size * size], size as u32)
         // set display colors
         .with_color(0, [88, 95, 107, 255]) // nothing
-        .with_color(1, [50, 168, 131, 255]) // sources
-        .with_color(2, [11, 82, 59, 255]) // main tree
-        .with_color(3, [222, 199, 29, 255]) // lights
-        .with_color(4, [72, 31, 7, 255]) // stump builder
-        .with_color(5, [92, 51, 17, 255]) // branches
-        .with_color(6, [82, 41, 7, 255]) // stump
+        .with_color(1, [11, 82, 59, 255]) // main tree
+        .with_color(2, [222, 199, 29, 255]) // lights
+        .with_color(3, [72, 31, 7, 255]) // stump builder
+        .with_color(4, [16, 87, 64, 255]) // branch source
+        .with_color(5, [88, 95, 107, 255]) // branch
+        //.with_color(5, [93, 100, 112, 255]) // branches
+        .with_color(6, [82, 41, 7, 255]) // stump remains
         // set progression rules
         .with_rule(cellumina::rule::EnvironmentRule {
             environment_size: [1, 1, 1, 1],
@@ -29,35 +30,39 @@ fn tree() {
 
                 if this == 0
                 // empty spaces below a stump builder
-                    && (grid[0][1] == 4
+                    && (grid[0][1] == 3
                         // or, with 10% change left/right below a stump builder
-                        || ((grid[0][0] == 4 && grid[1][0] == 0)
-                            || (grid[0][2] == 4 && grid[1][2] == 0))
-                            && rand::random::<f32>() < 0.1)
+                        || ((grid[0][0] == 3 && grid[1][0] == 0)
+                            || (grid[0][2] == 3 && grid[1][2] == 0))
+                            && rand::random::<f32>() < 0.4)
                 {
                     // become stump builder
-                    4
-                } else if this == 4 && (grid[2][1] == 126 || grid[2][1] == 6 || grid[2][1] == 5) {
-                    // stump buiders directly above the floow, a stump or a branch become a branch with 20% chance, if they are next to nothing else a stump
-                    if grid[1][0] == 0 || grid[1][2] == 0 {
-                        choose(0.1, 5, 6)
+                    3
+                } else if this == 3 && (grid[2][1] != 0 && grid[2][1] != 3) {
+                    // stump buiders directly above non-empty, non-stump-builder next to nothing become a branch source with small chance,
+                    // else just stump remains
+                    // top one guaranteed to be branch source
+                    if (grid[0][0] == 0 && grid[0][1] == 0 && grid[0][2] == 0)
+                        || ((grid[1][0] == 0 || grid[1][2] == 0) && rand::random::<f32>() < 0.12)
+                    {
+                        4
                     } else {
                         6
                     }
-                } else if this == 0 && (grid[1][0] == 5 || grid[1][2] == 5) {
-                    // empty spaces next to a branch become a branch with 90% chance but terminate as a source otherwise
-                    choose(0.9, 5, 1)
                 } else if this == 0
+                    && (grid[1][0] == 5 || grid[1][2] == 5 || grid[1][0] == 4 || grid[1][2] == 4)
+                {
+                    // empty spaces next to a branch (-source) become a branch
+                    5
+                } else if (this == 0 || this == 6)
                     && (grid
                         .iter()
-                        .skip(6)
                         .take(3)
-                        .filter(|&&val| val == 1 || val == 2 || val == 5 || val == 3 || val == 6)
-                        .count()
-                        == 3)
+                        .filter(|&&val| val == 4 || val == 1 || val == 2))
+                    .count()
+                        > 0
                 {
-                    // empty spaces, where the three blocks below are all branches, lights, leaves or sources become a leaf, but a light with 5% chance
-                    choose(0.95, 2, 3)
+                    choose(0.95, 1, 2)
                 } else {
                     this
                 }
