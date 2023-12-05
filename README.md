@@ -38,8 +38,9 @@ It will then take ownership of a configured automaton, run it by itself and disp
 This is useful when just playing around with cellular automata.
 
 The user can also directly change the state of cells. Press any (character or space) button, and then mouse clicks will replace the currently hovered cell with the pressed character.
-If you want to clear the whole screen and fill every cell with the same character, press ```Alt + <char>```.
+If you want to clear the whole screen and fill every cell with the same character, press ```Alt``` and that character.
 This works with all alphanumeric characters, but is currently not supported for space - you'll have to use ```Alt + 0``` instead.
+
 The automaton can also be paused and resumed with ```Enter```.
 The current state of the automaton can be saved to a file with ```Ctrl + S```, currently the following formats are supported: ```txt``` (with one row of chararcters per line) as well as ```png, jpeg, ico, bmp```. Normal restrictions of those files apply, e.g. saving to jpeg may result in compression, so ```.jpeg```-files are not suited for saving and reloading automata.
 
@@ -67,6 +68,8 @@ The [examples folder](https://github.com/Linus-Mussmaecher/cellumina/tree/master
  * ```sand```: A small falling sand simulation using pattern replacement rules to simulate falling sand, fire and ash.
  * ```rule90```: A implementation of the [Rule 90](https://en.wikipedia.org/wiki/Rule_90) 1-dimensional cellular automaton that demonstrates how to use Cellumina's 2D-grid to display multiple successive states of a 1-dimensional automaton.
  * ```to_string```: An example that shows how to convert rules to and from the different string/file types.
+ * ```rps```: An environment-based system of four different cell states that circularly annihilate each other (as in rock-paper-scissors), creating pleasing wave patterns.
+ * ```various```: Various different automata that create a finished, static state from a set of rules, such as a labyrith pattern or a christmas tree.
 
  All examples can be run by cloning this repository with
  ```bash
@@ -76,6 +79,7 @@ The [examples folder](https://github.com/Linus-Mussmaecher/cellumina/tree/master
   ```bash
     cargo run --examples sand --features="display"
   ```
+ the ```to_string``` example additionaly requires the ```simple_logger``` feature to demonstrate logging.
 
 ### Logging
 
