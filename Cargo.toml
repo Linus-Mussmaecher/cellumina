@@ -61,5 +61,5 @@ name = "rps"
 required-features = ["display"]
 
 [[example]]
-name = "labyrinth"
+name = "various"
 required-features = ["display"]
