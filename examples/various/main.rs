@@ -8,17 +8,26 @@ fn tree() {
     let size = 128;
     cellumina::AutomatonBuilder::new()
         // Generate a size x size initial state, all being nothing.
-        // The user needs to set one cell to 1 to start the algo
+        // The user needs to set one cell to 3 to start the algo
         .from_vec(vec![0; size * size], size as u32)
-        // set display colors
+        // --- MAINT TREE ---
         .with_color(0, [88, 95, 107, 255]) // nothing
         .with_color(1, [11, 82, 59, 255]) // main tree
-        .with_color(2, [222, 199, 29, 255]) // lights
+        // --- BUILDER & BRANCHES ---
         .with_color(3, [72, 31, 7, 255]) // stump builder
         .with_color(4, [16, 87, 64, 255]) // branch source
         .with_color(5, [88, 95, 107, 255]) // branch
         //.with_color(5, [93, 100, 112, 255]) // branches
         .with_color(6, [82, 41, 7, 255]) // stump remains
+        // --- CANDLE ---
+        .with_color(10, [250, 246, 217, 255]) // candle 1
+        .with_color(11, [250, 246, 217, 255]) // candle 2
+        .with_color(12, [250, 246, 217, 255]) // candle 2
+        .with_color(13, [222, 199, 29, 255]) // lights
+        // --- BALLS ---
+        .with_color(20, [181, 69, 69, 255]) // ball center
+        .with_color(21, [181, 69, 69, 255]) // ball outer
+        .with_color(22, [181, 69, 69, 255]) // ball outer
         // set progression rules
         .with_rule(cellumina::rule::EnvironmentRule {
             environment_size: [1, 1, 1, 1],
@@ -32,10 +41,10 @@ fn tree() {
                 if this == 0
                 // empty spaces below a stump builder
                     && (grid[0][1] == 3
-                        // or, with 10% change left/right below a stump builder
+                        // or, with low change left/right below a stump builder
                         || ((grid[0][0] == 3 && grid[1][0] == 0)
                             || (grid[0][2] == 3 && grid[1][2] == 0))
-                            && rand::random::<f32>() < 0.4)
+                            && rand::random::<f32>() < 0.3)
                 {
                     // become stump builder
                     3
@@ -59,11 +68,27 @@ fn tree() {
                     && (grid
                         .iter()
                         .take(3)
-                        .filter(|&&val| val == 4 || val == 1 || val == 2))
+                        .filter(|&&val| val == 4 || val == 1 || val == 2 || val == 7 || val == 8))
                     .count()
                         > 0
                 {
-                    choose(0.95, 1, 2)
+                    // air and stump remains become leaves (or candle base / ball center with small chance) if an element above is a leaf, candle, light or branch source
+                    choose(0.99, 1, choose(0.5, 10, 20))
+                } else if this == 0 || this == 1 || this == 5 {
+                    if grid[2][1] >= 10 && grid[2][1] <= 12 {
+                        // candle parts extend upwards
+                        grid[2][1] + 1
+                    } else if grid[0][0] == 20 || grid[0][1] == 20 || grid[1][0] == 20 {
+                        21
+                    } else if [grid[0][1], grid[1][0], grid[1][2], grid[2][1]]
+                        .iter()
+                        .any(|&val| val == 20 || val == 21)
+                    {
+                        // next to ball center: ball
+                        22
+                    } else {
+                        this
+                    }
                 } else {
                     this
                 }
