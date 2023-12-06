@@ -160,8 +160,6 @@ impl AutomatonController {
                                     "Screen clear queued with character {}.",
                                     self.replacement_char
                                 );
-                            } else {
-                                log::warn!("Could not unwrap code {:?}", code);
                             }
                         }
 
