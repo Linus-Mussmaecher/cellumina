@@ -15,7 +15,7 @@ keywords = ["cellular", "automaton", "WebGL"]
 [dependencies]
 # basic dependencies
 rayon = "1.7"
-grid = "0.12"
+grid = "0.10"
 rand = "0.8"
 image = "0.24"
 thiserror = "1.0"
@@ -29,8 +29,8 @@ log = "0.4"
 simple_logger = {version = "4.2", optional = true}
 
 # display dependencies
-winit = {version = "0.29", optional = true}
-wgpu = {version = "0.18", optional = true}
+winit = {version = "0.28", optional = true}
+wgpu = {version = "0.16", optional = true}
 pollster = {version = "0.3", optional = true}
 bytemuck = { version = "1.13.1", features = [ "derive" ], optional=true }
 native-dialog = {version =  "0.7", optional = true}
