@@ -182,11 +182,23 @@ fn main() {
                 after: grid::grid![[41, 127]],
                 ..Default::default()
             },
-            // Lastly, the Source has a 50% chance of spawning a fire cell above it every time step.
+            // the Source has a 50% chance of spawning a fire cell above it every time step.
             Pattern {
                 chance: 0.5,
                 before: grid::grid![[127][54]],
                 after: grid::grid![[41][54]],
+                ..Default::default()
+            },
+            // The Sand source spawns a sand below it every step
+            Pattern {
+                before: grid::grid![[60][127]],
+                after: grid::grid![[60][59]],
+                ..Default::default()
+            },
+            // The Sand swallower deletes sand above it every step
+            Pattern {
+                before: grid::grid![[59][61]],
+                after: grid::grid![[0][61]],
                 ..Default::default()
             },
         ])
@@ -194,13 +206,17 @@ fn main() {
         .with_colors(HashMap::from([
             // space is nothing, so well use a soft blue as our background.
             (0, [61, 159, 184, 255]),
-            // Sand
+            // Sand -- falls
             (59, [224, 210, 159, 255]),
-            // Fire
+            // Sand Source -- continually spawns sand
+            (60, [234, 220, 179, 255]),
+            // Sand Swallower -- continuosly vanishes sand
+            (61, [214, 200, 139, 255]),
+            // Fire -- Rises, burns sand to ash + fire, vanishes over time
             (41, [224, 105, 54, 255]),
-            // Ash
+            // Ash -- falls, turn sand to fire
             (36, [184, 182, 182, 255]),
-            // The Source
+            // Fire Source -- creates fire
             (54, [128, 25, 14, 255]),
         ]))
         // Set a time step so the simulation runs at a consistent speed.

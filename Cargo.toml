@@ -62,5 +62,9 @@ name = "rps"
 required-features = ["display"]
 
 [[example]]
-name = "various"
+name = "tree"
+required-features = ["display", "simple_logger"]
+
+[[example]]
+name = "labyrinth"
 required-features = ["display", "simple_logger"]
